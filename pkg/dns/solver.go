@@ -23,17 +23,21 @@ type ProviderSolver struct {
 // cert-manager itself will later perform a self check to ensure that the
 // solver has correctly configured the DNS provider.
 func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
-	apiClient, err := p.getDomainAPI(ch)
+	apiClient, err := p.getDomainAPI()
 	if err != nil {
 		return err
 	}
 
+	record, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch))
+	if modelErr != nil {
+		return modelErr
+	}
 	_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.getContext()).
-		CreateRecordRequestModel(p.getCreateRecordRequestModel(ch)).
+		CreateRecordRequestModel(record).
 		Execute()
 
 	if creationErr.Error() != "" {
-		return fmt.Errorf("failed to update DNS zone recrds: %w", creationErr)
+		return fmt.Errorf("failed to update DNS zone records: %w", creationErr)
 	}
 
 	return nil
@@ -46,10 +50,17 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 // This is in order to facilitate multiple DNS validations for the same domain
 // concurrently.
 func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
-	apiClient, err := p.getDomainAPI(ch)
+	apiClient, err := p.getDomainAPI()
 	if err != nil {
 		return err
 	}
+
+	//TODO BEGIN replace later when it is possible to delete by ID
+	records, retrieveErr := p.getEntriesToPreserve(ch)
+	if retrieveErr != nil {
+		return retrieveErr
+	}
+	//TODO END
 
 	_, deletionErr := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getContext()).
 		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
@@ -59,9 +70,28 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 		Execute()
 
 	if deletionErr.Error() != "" {
-		return fmt.Errorf("failed to delete DNS zone recrds: %w", deletionErr)
+		return fmt.Errorf("failed to delete DNS zone records: %w", deletionErr)
 	}
 
+	//TODO BEGIN replace later when it is possible to delete by ID
+
+	// re add entries
+	for _, record := range records {
+
+		recordModel, modelErr := p.getCreateRecordRequestModel(record)
+		if modelErr != nil {
+			return modelErr
+		}
+
+		_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.getContext()).
+			CreateRecordRequestModel(recordModel).
+			Execute()
+
+		if creationErr.Error() != "" {
+			return fmt.Errorf("failed to readd previous DNS zone records: %w", creationErr)
+		}
+	}
+	//TODO END
 	return nil
 }
 
