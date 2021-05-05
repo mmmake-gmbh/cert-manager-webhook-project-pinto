@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pinto-webhook.fullname" . }}
+  labels:
+    app: {{ include "pinto-webhook.name" . }}
+    chart: {{ include "pinto-webhook.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector:
+    app: {{ include "pinto-webhook.name" . }}
+    release: {{ .Release.Name }}

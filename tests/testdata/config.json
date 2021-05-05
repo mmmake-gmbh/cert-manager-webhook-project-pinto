@@ -1,0 +1,10 @@
+{
+  "accessKeySecretRef": {
+    "name": "pinto-secret",
+    "key": "PTO_ACCESS_KEY"
+  },
+  "secretKeySecretRef": {
+    "name": "pinto-secret",
+    "key": "PTO_SECRET_KEY"
+  }
+}

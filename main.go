@@ -1,18 +1,21 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
+	"gitlab.com/whizus/cert-manager-webhook-pinto/pkg/dns"
 	"os"
+
+	"github.com/jetstack/cert-manager/pkg/acme/webhook/cmd"
 )
 
-var log = logrus.New()
 // GroupName is the name under which the webhook will be available
 var GroupName = os.Getenv("GROUP_NAME")
 
 func main() {
 	if GroupName == "" {
-		log.Errorf("Environment variable %s is required for program to start! Shutting down.", "GROUP_NAME")
-		os.Exit(1)
+		panic("GROUP_NAME must be specified")
 	}
-	// TODO: implement me
+
+	cmd.RunWebhookServer(GroupName,
+		&dns.ProviderSolver{},
+	)
 }
