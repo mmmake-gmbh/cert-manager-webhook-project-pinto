@@ -10,7 +10,6 @@ import (
 )
 
 const pagingSize = 20
-const ttlDNS = 60
 
 func (p *ProviderSolver) getDomainAPI() (*gopinto.APIClient, error) {
 	config := gopinto.NewConfiguration()
@@ -28,6 +27,8 @@ func (p *ProviderSolver) getDomainAPI() (*gopinto.APIClient, error) {
 func (p *ProviderSolver) getCreateRecordRequestModel(record gopinto.Record) (gopinto.CreateRecordRequestModel, error) {
 	var postRequestModel gopinto.CreateRecordRequestModel
 	err := copier.Copy(&record, &postRequestModel)
+
+	postRequestModel.Environment = p.Environment()
 	return postRequestModel, err
 }
 
