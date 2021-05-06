@@ -10,6 +10,7 @@ import (
 )
 
 const pagingSize = 20
+const ttlDNS = 60
 
 func (p *ProviderSolver) getDomainAPI() (*gopinto.APIClient, error) {
 	config := gopinto.NewConfiguration()
@@ -49,7 +50,7 @@ func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.
 			PageToken(strconv.Itoa(page)).
 			Execute()
 
-		// an error occurs return already gathered entries and an the occurring error
+		// an error occurs return already gathered entries and the occurring error
 		if getError.Error() != "" {
 			return aggregatedRecords, getError
 		}
@@ -89,7 +90,7 @@ func hasSameNaming(a gopinto.Record, b gopinto.Record) bool {
 }
 
 func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest) gopinto.Record {
-	ttl := int64(60)
+	ttl := int64(ttlDNS)
 	return gopinto.Record{
 		Name:  strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), "."),
 		Type:  gopinto.TXT,
