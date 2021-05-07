@@ -14,7 +14,16 @@ import (
 // ProviderSolver is the struct implementing the webhook.Solver interface
 // for pinto DNS
 type ProviderSolver struct {
-	client kubernetes.Interface
+	k8Client    kubernetes.Interface
+	client      *gopinto.APIClient
+	config      *Config
+	apiKey      string
+	provider    string
+	environment string
+}
+
+func (p *ProviderSolver) Name() string {
+	return p.getConfig().Name()
 }
 
 // Present is responsible for actually presenting the DNS record with the
@@ -23,7 +32,7 @@ type ProviderSolver struct {
 // cert-manager itself will later perform a self check to ensure that the
 // solver has correctly configured the DNS provider.
 func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
-	apiClient, err := p.getDomainAPI()
+	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
 		return err
 	}
@@ -32,7 +41,7 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 	if modelErr != nil {
 		return modelErr
 	}
-	_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.getContext()).
+	_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.config.getContext()).
 		CreateRecordRequestModel(record).
 		Execute()
 
@@ -50,7 +59,7 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 // This is in order to facilitate multiple DNS validations for the same domain
 // concurrently.
 func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
-	apiClient, err := p.getDomainAPI()
+	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
 		return err
 	}
@@ -62,11 +71,11 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 	}
 	//TODO END
 
-	_, deletionErr := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getContext()).
+	_, deletionErr := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getConfig().getContext()).
 		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
 		Zone(strings.TrimSuffix(ch.ResolvedZone, ".")).
 		RecordType(gopinto.TXT).
-		Provider(p.Name()).
+		Provider(p.getConfig().Name()).
 		Execute()
 
 	if deletionErr.Error() != "" {
@@ -83,7 +92,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 			return modelErr
 		}
 
-		_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.getContext()).
+		_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.getConfig().getContext()).
 			CreateRecordRequestModel(recordModel).
 			Execute()
 
@@ -99,7 +108,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 // This method can be used to instantiate the webhook, i.e. initialising
 // connections or warming up caches.
 // Typically, the kubeClientConfig parameter is used to build a Kubernetes
-// client that can be used to fetch resources from the Kubernetes API, e.g.
+// k8Client that can be used to fetch resources from the Kubernetes API, e.g.
 // Secret resources containing credentials used to authenticate with DNS
 // provider accounts.
 // The stopCh can be used to handle early termination of the webhook, in cases
@@ -108,10 +117,16 @@ func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, stopCh <-chan
 
 	cl, err := kubernetes.NewForConfig(kubeClientConfig)
 	if err != nil {
-		return fmt.Errorf("failed to get kubernetes client: %w", err)
+		return fmt.Errorf("failed to get kubernetes k8Client: %w", err)
 	}
 
-	p.client = cl
+	p.k8Client = cl
 
+	client, domainErr := p.getDomainAPIClient()
+	if domainErr != nil {
+		return domainErr
+	}
+
+	p.client = client
 	return nil
 }

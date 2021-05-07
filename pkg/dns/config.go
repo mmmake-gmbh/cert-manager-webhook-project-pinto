@@ -4,13 +4,27 @@ import (
 	"context"
 	"gitlab.com/whizus/gopinto"
 	"k8s.io/api/core/v1"
+	"strings"
 )
 
-const defaultProvider = "RRPproxy"
-const defaultEnvironment = "prod1"
-const ttlDNS = 60
+const (
+	defaultProvider      = "RRPproxy"
+	defaultEnvironment   = "prod1"
+	defaultAcmeURL       = "" // TODO change default value
+	defaultOAuthTokenURL = "" // TODO change default value
+	ttlDNS               = 60
+)
 
-var savedContext = context.Background()
+var (
+	defaultOauthScopes = []string{
+		"citadel",
+		"acmegateway",
+	}
+)
+
+type Config struct {
+	savedContext context.Context
+}
 
 // ProviderConfig represents the config used for pinto DNS
 type ProviderConfig struct {
@@ -18,14 +32,14 @@ type ProviderConfig struct {
 	SecretKey *v1.SecretKeySelector `json:"secretKeySecretRef,omitempty"`
 }
 
-func (p *ProviderSolver) getContext() context.Context {
-	return savedContext
+func (c *Config) getContext() context.Context {
+	return c.savedContext
 }
 
 // Name is used as the name for this DNS solver when referencing it on the ACME
 // Issuer resource. Defaulting to "RRPproxy"
-func (p *ProviderSolver) Name() string {
-	provider := p.getContext().Value("provider")
+func (c *Config) Name() string {
+	provider := c.getContext().Value("provider")
 	if provider == nil {
 		provider = defaultProvider
 	}
@@ -33,8 +47,8 @@ func (p *ProviderSolver) Name() string {
 }
 
 // Environment is referencing the environment of the Pinto API. Defaults to the prod1 environment
-func (p *ProviderSolver) Environment() gopinto.NullableString {
-	environment := p.getContext().Value("environment")
+func (c *Config) Environment() gopinto.NullableString {
+	environment := c.getContext().Value("environment")
 	if environment == nil {
 		environment = defaultEnvironment
 	}
@@ -42,4 +56,44 @@ func (p *ProviderSolver) Environment() gopinto.NullableString {
 	result := new(gopinto.NullableString)
 	result.Set(&resultString)
 	return *result
+}
+
+// ACMEServerURL returns the URL to ACME instance. Defaults to Pinto Primary
+func (c *Config) ACMEServerURL() string {
+	acmeURL := c.getContext().Value("acme_url")
+	if acmeURL == nil {
+		acmeURL = defaultAcmeURL
+	}
+	return acmeURL.(string)
+}
+
+func (c *Config) OauthTokenURL() string {
+	oauthTokenURL := c.getContext().Value("oauth_token_url")
+	if oauthTokenURL == nil {
+		oauthTokenURL = defaultOAuthTokenURL
+	}
+	return oauthTokenURL.(string)
+}
+
+func (c *Config) OauthClientID() string {
+	// TODO implement
+	return ""
+}
+
+func (c *Config) OauthClientSecret() string {
+	// TODO implement
+	return ""
+}
+
+func (c *Config) OauthClientScopes() []string {
+	oauthScopesString := c.getContext().Value("oauth_scopes")
+	if oauthScopesString == nil {
+		return defaultOauthScopes
+	}
+	scopes := strings.Split(oauthScopesString.(string), ",")
+	var massagedScopes []string
+	for _, scope := range scopes {
+		massagedScopes = append(massagedScopes, strings.Trim(scope, " "))
+	}
+	return massagedScopes
 }

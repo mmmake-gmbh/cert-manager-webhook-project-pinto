@@ -5,22 +5,27 @@ import (
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"github.com/jinzhu/copier"
 	"gitlab.com/whizus/gopinto"
+	cc "golang.org/x/oauth2/clientcredentials"
 	"strconv"
 	"strings"
 )
 
 const pagingSize = 20
 
-func (p *ProviderSolver) getDomainAPI() (*gopinto.APIClient, error) {
+func (p *ProviderSolver) getDomainAPIClient() (*gopinto.APIClient, error) {
 	config := gopinto.NewConfiguration()
 	if config == nil {
 		return nil, fmt.Errorf("failed to load config")
 	}
-	client := gopinto.NewAPIClient(config)
 
-	// TODO refactor
+	config.Servers[0].URL = p.getConfig().ACMEServerURL()
+	authClientConfig, err := configureOAuthClientConfig(p)
+	if err != nil {
+		return nil, err
+	}
+	config.HTTPClient = authClientConfig.Client(p.getConfig().getContext())
 
-	return client, nil
+	return gopinto.NewAPIClient(config), nil
 }
 
 // transform gopinto.Record to gopinto.CreateRecordRequestModel
@@ -28,13 +33,13 @@ func (p *ProviderSolver) getCreateRecordRequestModel(record gopinto.Record) (gop
 	var postRequestModel gopinto.CreateRecordRequestModel
 	err := copier.Copy(&record, &postRequestModel)
 
-	postRequestModel.Environment = p.Environment()
+	postRequestModel.Environment = p.getConfig().Environment()
 	return postRequestModel, err
 }
 
 // Returns a Record array in any case and optionally an error. Should an error occur the array will be partially filled or empty
 func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.Record, error) {
-	apiClient, err := p.getDomainAPI()
+	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
 		return []gopinto.Record{}, err
 	}
@@ -42,11 +47,11 @@ func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.
 	var aggregatedRecords []gopinto.Record
 	page := 0
 	for {
-		records, _, getError := apiClient.RecordsApi.ApiDnsRecordsGet(p.getContext()).
+		records, _, getError := apiClient.RecordsApi.ApiDnsRecordsGet(p.getConfig().getContext()).
 			Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
 			Zone(strings.TrimSuffix(ch.ResolvedZone, ".")).
 			RecordType(gopinto.TXT).
-			Provider(p.Name()).
+			Provider(p.getConfig().Name()).
 			PageSize(pagingSize).
 			PageToken(strconv.Itoa(page)).
 			Execute()
@@ -95,8 +100,28 @@ func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest
 	return gopinto.Record{
 		Name:  strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), "."),
 		Type:  gopinto.TXT,
-		Class: p.Name(),
+		Class: p.getConfig().Name(),
 		Ttl:   &ttl,
 		Data:  strconv.Quote(ch.Key),
 	}
+}
+
+func (p *ProviderSolver) getConfig() *Config {
+	return p.config
+}
+
+func configureOAuthClientConfig(p *ProviderSolver) (cc.Config, error) {
+	tokenUrl := p.getConfig().OauthTokenURL()
+
+	clientId := p.getConfig().OauthClientID()
+	clientSecret := p.getConfig().OauthClientSecret()
+	clientScope := p.getConfig().OauthClientScopes()
+
+	oauthConfig := cc.Config{
+		TokenURL:     tokenUrl,
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		Scopes:       clientScope,
+	}
+	return oauthConfig, nil
 }
