@@ -18,7 +18,7 @@ func (p *ProviderSolver) getDomainAPIClient() (*gopinto.APIClient, error) {
 		return nil, fmt.Errorf("failed to load config")
 	}
 
-	config.Servers[0].URL = p.getConfig().ACMEServerURL()
+	config.Servers[0].URL = p.getConfig().PintoApiURL()
 	authClientConfig, err := configureOAuthClientConfig(p)
 	if err != nil {
 		return nil, err
@@ -107,6 +107,9 @@ func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest
 }
 
 func (p *ProviderSolver) getConfig() *Config {
+	if p.config == nil {
+		p.config = &Config{}
+	}
 	return p.config
 }
 

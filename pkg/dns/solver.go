@@ -32,6 +32,11 @@ func (p *ProviderSolver) Name() string {
 // cert-manager itself will later perform a self check to ensure that the
 // solver has correctly configured the DNS provider.
 func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
+	configErr := p.getConfig().init(p.k8Client, ch)
+	if configErr != nil {
+		return configErr
+	}
+
 	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
 		return err
@@ -122,11 +127,5 @@ func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, stopCh <-chan
 
 	p.k8Client = cl
 
-	client, domainErr := p.getDomainAPIClient()
-	if domainErr != nil {
-		return domainErr
-	}
-
-	p.client = client
 	return nil
 }

@@ -2,17 +2,45 @@ package dns
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"gitlab.com/whizus/gopinto"
 	"k8s.io/api/core/v1"
+	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"os"
 	"strings"
 )
 
 const (
-	defaultProvider      = "RRPproxy"
-	defaultEnvironment   = "prod1"
-	defaultAcmeURL       = "" // TODO change default value
-	defaultOAuthTokenURL = "" // TODO change default value
-	ttlDNS               = 60
+	defaultProvider          = "RRPproxy"
+	defaultEnvironment       = "prod1"
+	defaultPintoApiURL       = "" // TODO change default value
+	defaultOAuthTokenURL     = "" // TODO change default value
+	defaultOAuthClientID     = ""
+	defaultOAuthClientSecret = ""
+	ttlDNS                   = 60
+)
+
+const (
+	accessKeyContextKey         = "access_key"
+	secretKeyContextKey         = "secret_key"
+	providerContextKey          = "provider"
+	environmentContextKey       = "environment"
+	pintoApiUrlContextKey       = "acme_url"
+	oauthCTokenUrlContextKey    = "oauth_token_url"
+	oauthClientIDContextKey     = "oauth_client_id"
+	oauthClientSecretContextKey = "oauth_client_secret"
+	oauthScopesContextKey       = "oauth_scopes"
+)
+
+const (
+	accessKeyEnvName     = "PINTO_ACCESS_KEY"
+	secretKeyEnvName     = "PINTO_SECRET_KEY"
+	pintoApiUrlEnvName   = "PINTO_API_URL"
+	oauthTokenUrlEnvName = "PINTO_OAUTH_TOKEN_URL"
 )
 
 var (
@@ -28,8 +56,10 @@ type Config struct {
 
 // ProviderConfig represents the config used for pinto DNS
 type ProviderConfig struct {
-	AccessKey *v1.SecretKeySelector `json:"accessKeySecretRef,omitempty"`
-	SecretKey *v1.SecretKeySelector `json:"secretKeySecretRef,omitempty"`
+	AccessKey     *v1.SecretKeySelector `json:"accessKeySecretRef,omitempty"`
+	SecretKey     *v1.SecretKeySelector `json:"secretKeySecretRef,omitempty"`
+	PintoApiUrl   *v1.SecretKeySelector `json:"pintoApiUrlSecretRef,omitempty"`
+	OauthTokenUrl *v1.SecretKeySelector `json:"oauthTokenUrlSecretRef,omitempty"`
 }
 
 func (c *Config) getContext() context.Context {
@@ -39,7 +69,7 @@ func (c *Config) getContext() context.Context {
 // Name is used as the name for this DNS solver when referencing it on the ACME
 // Issuer resource. Defaulting to "RRPproxy"
 func (c *Config) Name() string {
-	provider := c.getContext().Value("provider")
+	provider := c.getContext().Value(providerContextKey)
 	if provider == nil {
 		provider = defaultProvider
 	}
@@ -48,7 +78,7 @@ func (c *Config) Name() string {
 
 // Environment is referencing the environment of the Pinto API. Defaults to the prod1 environment
 func (c *Config) Environment() gopinto.NullableString {
-	environment := c.getContext().Value("environment")
+	environment := c.getContext().Value(environmentContextKey)
 	if environment == nil {
 		environment = defaultEnvironment
 	}
@@ -58,17 +88,17 @@ func (c *Config) Environment() gopinto.NullableString {
 	return *result
 }
 
-// ACMEServerURL returns the URL to ACME instance. Defaults to Pinto Primary
-func (c *Config) ACMEServerURL() string {
-	acmeURL := c.getContext().Value("acme_url")
-	if acmeURL == nil {
-		acmeURL = defaultAcmeURL
+// PintoApiURL returns the URL to ACME instance. Defaults to Pinto Primary
+func (c *Config) PintoApiURL() string {
+	pintoApiUrl := c.getContext().Value(pintoApiUrlContextKey)
+	if pintoApiUrl == nil {
+		pintoApiUrl = defaultPintoApiURL
 	}
-	return acmeURL.(string)
+	return pintoApiUrl.(string)
 }
 
 func (c *Config) OauthTokenURL() string {
-	oauthTokenURL := c.getContext().Value("oauth_token_url")
+	oauthTokenURL := c.getContext().Value(oauthCTokenUrlContextKey)
 	if oauthTokenURL == nil {
 		oauthTokenURL = defaultOAuthTokenURL
 	}
@@ -76,17 +106,23 @@ func (c *Config) OauthTokenURL() string {
 }
 
 func (c *Config) OauthClientID() string {
-	// TODO implement
-	return ""
+	oauthClientId := c.getContext().Value(oauthClientIDContextKey)
+	if oauthClientId == nil {
+		oauthClientId = defaultOAuthClientID
+	}
+	return oauthClientId.(string)
 }
 
 func (c *Config) OauthClientSecret() string {
-	// TODO implement
-	return ""
+	oauthClientSecret := c.getContext().Value(oauthClientSecretContextKey)
+	if oauthClientSecret == nil {
+		oauthClientSecret = defaultOAuthClientSecret
+	}
+	return oauthClientSecret.(string)
 }
 
 func (c *Config) OauthClientScopes() []string {
-	oauthScopesString := c.getContext().Value("oauth_scopes")
+	oauthScopesString := c.getContext().Value(oauthScopesContextKey)
 	if oauthScopesString == nil {
 		return defaultOauthScopes
 	}
@@ -96,4 +132,92 @@ func (c *Config) OauthClientScopes() []string {
 		massagedScopes = append(massagedScopes, strings.Trim(scope, " "))
 	}
 	return massagedScopes
+}
+
+func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeRequest) error {
+	initialContext := context.Background()
+
+	config, err := loadConfig(ch.Config)
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+	enrichedContext := initialContext
+
+	// evaluate access and secret key
+	accessKey := os.Getenv(accessKeyEnvName)
+	secretKey := os.Getenv(secretKeyEnvName)
+
+	if config.AccessKey != nil && config.SecretKey != nil {
+		accessKeySecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.AccessKey.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("could not get secret %s: %w", config.AccessKey.Name, err)
+		}
+		secretKeySecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.SecretKey.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("could not get secret %s: %w", config.SecretKey.Name, err)
+		}
+
+		accessKeyData, ok := accessKeySecret.Data[config.AccessKey.Key]
+		if !ok {
+			return fmt.Errorf("could not get key %s in secret %s", config.AccessKey.Key, config.AccessKey.Name)
+		}
+
+		secretKeyData, ok := secretKeySecret.Data[config.SecretKey.Key]
+		if !ok {
+			return fmt.Errorf("could not get key %s in secret %s", config.SecretKey.Key, config.SecretKey.Name)
+		}
+
+		accessKey = string(accessKeyData)
+		secretKey = string(secretKeyData)
+	}
+	enrichedContext = context.WithValue(enrichedContext, accessKeyContextKey, accessKey)
+	enrichedContext = context.WithValue(enrichedContext, secretKeyContextKey, secretKey)
+
+	// evaluate API url
+	pintoApiUrl := os.Getenv(pintoApiUrlEnvName)
+	if config.PintoApiUrl != nil {
+		pintoApiUrlSecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.PintoApiUrl.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("could not get secret %s: %w", config.PintoApiUrl.Name, err)
+		}
+		pintoApiUrlData, ok := pintoApiUrlSecret.Data[config.PintoApiUrl.Key]
+		if !ok {
+			return fmt.Errorf("could not get key %s in secret %s", config.PintoApiUrl.Key, config.PintoApiUrl.Name)
+		}
+		pintoApiUrl = string(pintoApiUrlData)
+	}
+	enrichedContext = context.WithValue(enrichedContext, pintoApiUrlContextKey, pintoApiUrl)
+
+	// evaluate oauth Token URL
+	oauthTokenUrl := os.Getenv(oauthTokenUrlEnvName)
+	if config.OauthTokenUrl != nil {
+		oauthTokenUrlSecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.OauthTokenUrl.Name, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("could not get secret %s: %w", config.OauthTokenUrl.Name, err)
+		}
+		oauthTokenUrlData, ok := oauthTokenUrlSecret.Data[config.OauthTokenUrl.Key]
+		if !ok {
+			return fmt.Errorf("could not get key %s in secret %s", config.OauthTokenUrl.Key, config.OauthTokenUrl.Name)
+		}
+		pintoApiUrl = string(oauthTokenUrlData)
+	}
+	enrichedContext = context.WithValue(enrichedContext, oauthCTokenUrlContextKey, oauthTokenUrl)
+
+	c.savedContext = enrichedContext
+	return nil
+}
+
+// loadConfig is a small helper function that decodes JSON configuration into
+// the typed config struct.
+func loadConfig(cfgJSON *extapi.JSON) (ProviderConfig, error) {
+	cfg := ProviderConfig{}
+	// handle the 'base case' where no configuration has been provided
+	if cfgJSON == nil {
+		return cfg, nil
+	}
+	if err := json.Unmarshal(cfgJSON.Raw, &cfg); err != nil {
+		return cfg, fmt.Errorf("error decoding solver config: %v", err)
+	}
+
+	return cfg, nil
 }
