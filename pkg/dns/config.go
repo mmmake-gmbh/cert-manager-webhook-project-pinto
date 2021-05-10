@@ -199,7 +199,7 @@ func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeReque
 		if !ok {
 			return fmt.Errorf("could not get key %s in secret %s", config.OauthTokenUrl.Key, config.OauthTokenUrl.Name)
 		}
-		pintoApiUrl = string(oauthTokenUrlData)
+		oauthTokenUrl = string(oauthTokenUrlData)
 	}
 	enrichedContext = context.WithValue(enrichedContext, oauthCTokenUrlContextKey, oauthTokenUrl)
 
