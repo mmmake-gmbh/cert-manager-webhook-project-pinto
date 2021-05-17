@@ -29,11 +29,14 @@ func (p *ProviderSolver) getDomainAPIClient() (*gopinto.APIClient, error) {
 }
 
 // transform gopinto.Record to gopinto.CreateRecordRequestModel
-func (p *ProviderSolver) getCreateRecordRequestModel(record gopinto.Record) (gopinto.CreateRecordRequestModel, error) {
+func (p *ProviderSolver) getCreateRecordRequestModel(record gopinto.Record, zone string) (gopinto.CreateRecordRequestModel, error) {
 	var postRequestModel gopinto.CreateRecordRequestModel
-	err := copier.Copy(&record, &postRequestModel)
+	err := copier.Copy(&postRequestModel, &record)
 
 	postRequestModel.Environment = p.getConfig().Environment()
+	postRequestModel.Zone = zone
+	postRequestModel.Provider = p.getConfig().Provider()
+
 	return postRequestModel, err
 }
 

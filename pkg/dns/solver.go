@@ -42,7 +42,7 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 		return err
 	}
 
-	record, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch))
+	record, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch), ch.ResolvedZone)
 	if modelErr != nil {
 		return modelErr
 	}
@@ -92,7 +92,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 	// re add entries
 	for _, record := range records {
 
-		recordModel, modelErr := p.getCreateRecordRequestModel(record)
+		recordModel, modelErr := p.getCreateRecordRequestModel(record, ch.ResolvedZone)
 		if modelErr != nil {
 			return modelErr
 		}
