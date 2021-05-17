@@ -1,0 +1,16 @@
+default:
+  image: golang:1.16.4-alpine
+
+stages:
+  - lint
+
+
+lint:
+  stage: lint
+  script:
+    - |
+      FILES=$(gofmt -s -l .)
+      if [ -n "${FILES}" ]; then
+          printf "Following files are not formatted: \n%s" "$FILES"
+          exit 1
+      fi

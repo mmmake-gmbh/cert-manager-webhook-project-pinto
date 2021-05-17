@@ -43,6 +43,6 @@ docker-buildx-all:
 
 release: docker-buildx-all
 
-.PHONY: fmt
-fmt:
-	go fmt
+.PHONY: fmt-fix
+fmt-fix:
+	gofmt -s -w .
