@@ -17,8 +17,8 @@ import (
 const (
 	defaultProvider          = "RRPproxy"
 	defaultEnvironment       = "prod1"
-	defaultPintoApiURL       = "" // TODO change default value
-	defaultOAuthTokenURL     = "" // TODO change default value
+	defaultPintoApiURL       = "https://pinto.irgendwo.co"
+	defaultOAuthTokenURL     = "https://auth.pinto.irgendwo.co/connect/token"
 	defaultOAuthClientID     = ""
 	defaultOAuthClientSecret = ""
 	ttlDNS                   = 60
@@ -84,6 +84,14 @@ func (c *Config) Environment() gopinto.NullableString {
 	result := new(gopinto.NullableString)
 	result.Set(&resultString)
 	return *result
+}
+
+func (c *Config) Provider() string {
+	provider := c.getContext().Value(providerContextKey)
+	if provider == nil {
+		provider = defaultProvider
+	}
+	return provider.(string)
 }
 
 // PintoApiURL returns the URL to ACME instance. Defaults to Pinto Primary
