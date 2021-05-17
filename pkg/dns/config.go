@@ -25,8 +25,6 @@ const (
 )
 
 const (
-	accessKeyContextKey         = "access_key"
-	secretKeyContextKey         = "secret_key"
 	providerContextKey          = "provider"
 	environmentContextKey       = "environment"
 	pintoApiUrlContextKey       = "acme_url"
@@ -37,10 +35,10 @@ const (
 )
 
 const (
-	accessKeyEnvName     = "PINTO_ACCESS_KEY"
-	secretKeyEnvName     = "PINTO_SECRET_KEY"
-	pintoApiUrlEnvName   = "PINTO_API_URL"
-	oauthTokenUrlEnvName = "PINTO_OAUTH_TOKEN_URL"
+	oauthClientIDEnvName     = "PINTO_OAUTH_CLIENT_ID"
+	oauthClientSecretEnvName = "PINTO_OAUTH_CLIENT_SECRET"
+	pintoApiUrlEnvName       = "PINTO_API_URL"
+	oauthTokenUrlEnvName     = "PINTO_OAUTH_TOKEN_URL"
 )
 
 var (
@@ -144,8 +142,8 @@ func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeReque
 	enrichedContext := initialContext
 
 	// evaluate access and secret key
-	accessKey := os.Getenv(accessKeyEnvName)
-	secretKey := os.Getenv(secretKeyEnvName)
+	accessKey := os.Getenv(oauthClientIDEnvName)
+	secretKey := os.Getenv(oauthClientSecretEnvName)
 
 	if config.AccessKey != nil && config.SecretKey != nil {
 		accessKeySecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.AccessKey.Name, metav1.GetOptions{})
@@ -170,8 +168,8 @@ func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeReque
 		accessKey = string(accessKeyData)
 		secretKey = string(secretKeyData)
 	}
-	enrichedContext = context.WithValue(enrichedContext, accessKeyContextKey, accessKey)
-	enrichedContext = context.WithValue(enrichedContext, secretKeyContextKey, secretKey)
+	enrichedContext = context.WithValue(enrichedContext, oauthClientIDContextKey, accessKey)
+	enrichedContext = context.WithValue(enrichedContext, oauthClientSecretContextKey, secretKey)
 
 	// evaluate API url
 	pintoApiUrl := os.Getenv(pintoApiUrlEnvName)

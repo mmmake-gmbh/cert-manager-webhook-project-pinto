@@ -1,11 +1,11 @@
 {
   "accessKeySecretRef": {
     "name": "pinto-secret",
-    "key": "PINTO_ACCESS_KEY"
+    "key": "PINTO_OAUTH_CLIENT_ID"
   },
   "secretKeySecretRef": {
     "name": "pinto-secret",
-    "key": "PINTO_SECRET_KEY"
+    "key": "PINTO_OAUTH_CLIENT_SECRET"
   },
   "pintoApiUrlSecretRef": {
     "name": "pinto-secret",

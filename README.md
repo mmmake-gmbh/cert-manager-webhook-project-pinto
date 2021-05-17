@@ -1,5 +1,5 @@
 # Cert Manager Webhook for Pinto DNS
-
+//TODO replace URLs    
 Cert Manager Webhook for Pinto DNS is a ACME webhook for [cert-manager](https://cert-manager.io/) allowing users to use [Pinto DNS](https://www.pinto.com/en/docs/pinto-dns/) for DNS01 challenge.
 
 ## Getting started
@@ -32,7 +32,7 @@ helm install pinto-webhook deploy/pinto-webhook
 helm install pinto-webhook deploy/pinto-webhook --set secret.accessKey=<YOUR-ACCESS-KEY> --set secret.secretKey=<YOUR-SECRET_KEY>
 ```
 
-The Pinto Webhook is now installed! :tada:
+The Pinto Webhook is now installed!
 
 ### How to use it
 
@@ -46,8 +46,8 @@ First step is to create a secret containing the Pinto Access and Secret keys. Cr
 ```yaml
 apiVersion: v1
 stringData:
-  SCW_ACCESS_KEY: <YOUR-pinto-ACCESS-KEY>
-  SCW_SECRET_KEY: <YOUR-pinto-SECRET-KEY>
+  PINTO_OAUTH_CLIENT_ID: <YOUR-pinto-ACCESS-KEY>
+  PINTO_OAUTH_CLIENT_SECRET: <YOUR-pinto-SECRET-KEY>
 kind: Secret
 metadata:
   name: pinto-secret
@@ -82,10 +82,10 @@ spec:
           config:
             # Only needed if you don't have default credentials as seen above.
             accessKeySecretRef:
-              key: SCW_ACCESS_KEY
+              key: PINTO_OAUTH_CLIENT_ID
               name: pinto-secret
             secretKeySecretRef:
-              key: SCW_SECRET_KEY
+              key: PINTO_OAUTH_CLIENT_SECRET
               name: pinto-secret
 ```
 
@@ -126,7 +126,7 @@ Your certificate is now available in the `example-com-tls` secret!
 
 Before running the test, you need:
 - A valid domain on Pinto DNS (here `example.com`)
-- The variables `SCW_ACCESS_KEY` and `SCW_SECRET_KEY` valid and in the environment
+- The variables `PINTO_OAUTH_CLIENT_ID` and `PINTO_OAUTH_CLIENT_SECRET` valid and in the environment
 
 In order to run the integration tests, run:
 ```bash
