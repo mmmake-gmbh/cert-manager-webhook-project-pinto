@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/copier"
 	"gitlab.com/whizus/gopinto"
 	cc "golang.org/x/oauth2/clientcredentials"
-	"strconv"
 	"strings"
 )
 
@@ -48,29 +47,49 @@ func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.
 		return []gopinto.Record{}, err
 	}
 
-	var aggregatedRecords []gopinto.Record
-	page := 0
-	for {
-		records, _, getError := apiClient.RecordsApi.ApiDnsRecordsGet(p.getConfig().getContext()).
-			Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
-			Zone(strings.TrimSuffix(ch.ResolvedZone, ".")).
-			RecordType(gopinto.TXT).
-			Provider(p.getConfig().Name()).
-			PageSize(pagingSize).
-			PageToken(strconv.Itoa(page)).
-			Execute()
+	records, response, getError := apiClient.RecordsApi.ApiDnsRecordsGet(p.getConfig().getContext()).
+		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
+		Zone(ch.ResolvedZone).
+		Environment(p.getConfig().Environment()).
+		RecordType(gopinto.TXT).
+		Provider(p.getConfig().Name()).
+		PageSize(100).
+		Execute()
 
-		// an error occurs return already gathered entries and the occurring error
-		if getError.Error() != "" {
-			return aggregatedRecords, getError
-		}
-
-		aggregatedRecords = append(aggregatedRecords, records...)
-		if len(records) != pagingSize {
-			break
-		}
+	if getError.Error() != "" {
+		logrus.Error(getError)
+		return nil, getError
 	}
-	return aggregatedRecords, nil
+	logrus.Trace(response)
+
+	// TODO reimplement paging if pagination is fixed at the API. At the moment of writing entries are repeated on multiple pages
+	//var aggregatedRecords []gopinto.Record
+	//page := 0
+	//for {
+	//	records, _, getError := apiClient.RecordsApi.ApiDnsRecordsGet(p.getConfig().getContext()).
+	//		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
+	//		Zone(ch.ResolvedZone).
+	//		Environment(p.getConfig().Environment()).
+	//		RecordType(gopinto.TXT).
+	//		Provider(p.getConfig().Name()).
+	//		PageSize(pagingSize).
+	//		PageToken(strconv.Itoa(page)).
+	//		Execute()
+	//
+	//	// an error occurs return already gathered entries and the occurring error
+	//	if getError.Error() != "" {
+	//		logrus.Error(getError)
+	//		return aggregatedRecords, getError
+	//	}
+	//	page++
+	//
+	//	aggregatedRecords = append(aggregatedRecords, records...)
+	//	if len(records) != pagingSize {
+	//		break
+	//	}
+	// }
+
+	return records, nil
 }
 
 func (p *ProviderSolver) getEntriesToPreserve(ch *v1alpha1.ChallengeRequest) ([]gopinto.Record, error) {
