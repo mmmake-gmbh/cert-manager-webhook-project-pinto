@@ -1,0 +1,18 @@
+{
+  "accessKeySecretRef": {
+    "name": "test-secret",
+    "key": "PINTO_OAUTH_CLIENT_ID"
+  },
+  "secretKeySecretRef": {
+    "name": "test-secret",
+    "key": "PINTO_OAUTH_CLIENT_SECRET"
+  },
+  "pintoApiUrlSecretRef": {
+    "name": "test-secret",
+    "key": "PINTO_API_URL"
+  },
+  "oauthTokenUrlSecretRef": {
+    "name": "test-secret",
+    "key": "PINTO_OAUTH_TOKEN_URL"
+  }
+}
