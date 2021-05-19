@@ -123,7 +123,7 @@ func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest
 	return gopinto.Record{
 		Name:  strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), "."),
 		Type:  gopinto.TXT,
-		Class: p.getConfig().Name(),
+		Class: "IN",
 		Ttl:   &ttl,
 		Data:  ch.Key,
 	}
