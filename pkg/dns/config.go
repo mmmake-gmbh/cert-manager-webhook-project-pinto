@@ -70,15 +70,12 @@ func (c *Config) Name() string {
 }
 
 // Environment is referencing the environment of the Pinto API. Defaults to the prod1 environment
-func (c *Config) Environment() gopinto.NullableString {
+func (c *Config) Environment() string {
 	environment := c.getContext().Value(environmentContextKey)
 	if environment == nil {
 		environment = defaultEnvironment
 	}
-	resultString := environment.(string)
-	result := new(gopinto.NullableString)
-	result.Set(&resultString)
-	return *result
+	return environment.(string)
 }
 
 func (c *Config) Provider() string {

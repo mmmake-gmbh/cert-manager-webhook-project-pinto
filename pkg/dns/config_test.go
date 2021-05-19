@@ -42,7 +42,7 @@ func TestConfig_Environment(t *testing.T) {
 			c := &Config{
 				savedContext: tt.fields.savedContext,
 			}
-			if got := *c.Environment().Get(); got != tt.want {
+			if got := c.Environment(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Environment() = %v, want %v", got, tt.want)
 			}
 		})

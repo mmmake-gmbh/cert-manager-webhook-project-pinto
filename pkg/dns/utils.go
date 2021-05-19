@@ -33,7 +33,8 @@ func (p *ProviderSolver) getCreateRecordRequestModel(record gopinto.Record, zone
 	var postRequestModel gopinto.CreateRecordRequestModel
 	err := copier.Copy(&postRequestModel, &record)
 
-	postRequestModel.Environment = p.getConfig().Environment()
+	environment := p.getConfig().Environment()
+	postRequestModel.Environment = *gopinto.NewNullableString(&environment)
 	postRequestModel.Zone = zone
 	postRequestModel.Provider = p.getConfig().Provider()
 
