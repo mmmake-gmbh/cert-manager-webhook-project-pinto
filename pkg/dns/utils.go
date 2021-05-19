@@ -105,7 +105,7 @@ func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest
 		Type:  gopinto.TXT,
 		Class: p.getConfig().Name(),
 		Ttl:   &ttl,
-		Data:  strconv.Quote(ch.Key),
+		Data:  ch.Key,
 	}
 }
 
