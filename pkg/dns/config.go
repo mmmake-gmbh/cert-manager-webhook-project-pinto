@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"os"
-	"strings"
 )
 
 const (
@@ -67,11 +66,7 @@ func (c *Config) getContext() context.Context {
 // Name is used as the name for this DNS solver when referencing it on the ACME
 // Issuer resource. Defaulting to "RRPproxy"
 func (c *Config) Name() string {
-	provider := c.getContext().Value(providerContextKey)
-	if provider == nil {
-		provider = defaultProvider
-	}
-	return provider.(string)
+	return c.Provider()
 }
 
 // Environment is referencing the environment of the Pinto API. Defaults to the prod1 environment
@@ -128,16 +123,11 @@ func (c *Config) OauthClientSecret() string {
 }
 
 func (c *Config) OauthClientScopes() []string {
-	oauthScopesString := c.getContext().Value(oauthScopesContextKey)
-	if oauthScopesString == nil {
+	oauthScopes := c.getContext().Value(oauthScopesContextKey)
+	if oauthScopes == nil {
 		return defaultOauthScopes
 	}
-	scopes := strings.Split(oauthScopesString.(string), ",")
-	var massagedScopes []string
-	for _, scope := range scopes {
-		massagedScopes = append(massagedScopes, strings.Trim(scope, " "))
-	}
-	return massagedScopes
+	return oauthScopes.([]string)
 }
 
 func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeRequest) error {
@@ -208,6 +198,13 @@ func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeReque
 		oauthTokenUrl = string(oauthTokenUrlData)
 	}
 	enrichedContext = context.WithValue(enrichedContext, oauthCTokenUrlContextKey, oauthTokenUrl)
+
+	// TODO add missing scopes
+	//scopes := strings.Split(oauthScopesString.(string), ",")
+	//var massagedScopes []string
+	//for _, scope := range scopes {
+	//	massagedScopes = append(massagedScopes, strings.Trim(scope, " "))
+	//}
 
 	c.savedContext = enrichedContext
 	return nil
