@@ -42,8 +42,8 @@ const (
 
 var (
 	defaultOauthScopes = []string{
-		"citadel",
-		"acmegateway",
+		"nexus",
+		"openapigateway",
 	}
 )
 
