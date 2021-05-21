@@ -47,9 +47,9 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 	if modelErr != nil {
 		return modelErr
 	}
-	_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.config.getContext()).
-		CreateRecordRequestModel(record).
-		Execute()
+	requestModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.config.getContext()).
+		CreateRecordRequestModel(record)
+	setRecord, response, creationErr := requestModel.Execute()
 
 	if creationErr != nil {
 		return fmt.Errorf("failed to update DNS zone records: %w", creationErr)
@@ -77,12 +77,17 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 	}
 	//TODO END
 
-	_, deletionErr := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getConfig().getContext()).
+	deletionModel := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getConfig().getContext()).
 		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
-		Zone(strings.TrimSuffix(ch.ResolvedZone, ".")).
+		Zone(ch.ResolvedZone).
+		Environment(p.getConfig().Environment()).
 		RecordType(gopinto.TXT).
 		Provider(p.getConfig().Name()).
-		Execute()
+		// if multiple entries with the same name are defined, we have to force the deletion of all
+		RequestBody(map[string]string{
+			"force": "true",
+		})
+	_, deletionErr := deletionModel.Execute()
 
 	if deletionErr != nil {
 		return fmt.Errorf("failed to delete DNS zone records: %w", deletionErr)
