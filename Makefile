@@ -9,8 +9,15 @@ FULL_IMAGE ?= $(REGISTRY)/$(IMAGE)
 
 IMAGE_TAG ?= $(shell git rev-parse HEAD)
 
-DOCKER_CLI_EXPERIMENTAL ?= enabled
+# Openapi generator
+PACKAGE ?= "gopinto"
+SOURCE_URL ?= "https://pinto.irgendwo.co/api/swagger/dns-swagger.json"
 
+GIT_HOST ?= "gitlab.com"
+GIT_REPOSITORY_NAMESPACE ?= "whizus/customer/pinto"
+GIT_REPOSITORY_NAME ?= "cert-manager-webhook-pinto"
+
+# Kubebuilder
 KUBEBUILDER_VERSION=2.3.1
 
 TEST_ZONE_NAME ?= example.com.
@@ -46,3 +53,13 @@ release: docker-buildx-all
 .PHONY: fmt-fix
 fmt-fix:
 	gofmt -s -w .
+
+generate-openapi:
+	openapi-generator-cli generate -g go \
+		-i $(SOURCE_URL) \
+		-o internal/gopinto/ \
+		--package-name $(PACKAGE) \
+		--git-repo-id $(GIT_REPOSITORY_NAME) \
+		--git-user-id $(GIT_REPOSITORY_NAMESPACE) \
+		--git-host $(GIT_HOST) \
+		--additional-properties=generateInterfaces=true,isGoSubmodule=true

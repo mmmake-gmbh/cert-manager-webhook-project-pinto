@@ -2,7 +2,7 @@ package dns
 
 import (
 	"context"
-	"gitlab.com/whizus/cert-manager-webhook-pinto/internal/testutils"
+	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/testutils"
 	v1 "k8s.io/api/core/v1"
 	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"reflect"

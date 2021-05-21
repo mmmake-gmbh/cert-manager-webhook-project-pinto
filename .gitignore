@@ -26,3 +26,10 @@ cert-manager-webhook-pinto
 *~
 
 tests/kubebuilder/
+
+# ignore automatically created go mod for gopinto
+internal/gopinto/go.mod
+internal/gopinto/go.sum
+internal/gopinto/.gitignore
+internal/gopinto/git_push.sh
+internal/gopinto/.travis.yml

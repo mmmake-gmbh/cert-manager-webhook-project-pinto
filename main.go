@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gitlab.com/whizus/cert-manager-webhook-pinto/pkg/dns"
+	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/pkg/dns"
 	"os"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/cmd"

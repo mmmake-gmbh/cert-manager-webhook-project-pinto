@@ -1,0 +1,529 @@
+openapi: 3.0.1
+info:
+  description: |
+    <h1>Additional info</h1>
+    <h2><a href="/nexus-info">Nexus Info (DNS - CloudProviders)</h2></a>
+
+    <h2><a href="/markdown/OPENAPIGATEWAY-USAGE.MD">OPENAPIGATEWAY-USAGE.MD</h2></a>
+    <h2><a href="/markdown/CHANGELOG.md">CHANGELOG.md</h2></a>
+    <h2><a href="/markdown/version.md">version.md</h2></a>
+  title: Pinto - OpenApi Gateway - DNS
+  version: v1
+servers:
+- url: /
+security:
+- oidc:
+  - nexus
+  - openapigateway
+paths:
+  /api/dns/Records:
+    delete:
+      parameters:
+      - description: The name of the provider to utilize
+        explode: true
+        in: query
+        name: provider
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: The name of the environment to utilize
+        explode: true
+        in: query
+        name: environment
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: DNS zone to delete records of
+        explode: true
+        in: query
+        name: zone
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: Name of the DNS record(s) to delete
+        explode: true
+        in: query
+        name: name
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: RecordType of the DNS record(s) to delete
+        explode: true
+        in: query
+        name: recordType
+        required: true
+        schema:
+          $ref: '#/components/schemas/RecordType'
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties:
+                type: string
+              type: object
+          text/json:
+            schema:
+              additionalProperties:
+                type: string
+              type: object
+          application/*+json:
+            schema:
+              additionalProperties:
+                type: string
+              type: object
+        description: Meta data to pass through to the provider
+      responses:
+        "200":
+          description: Success
+        "204":
+          description: Successfully deleted
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Deletes records which match the specified criterias
+      tags:
+      - Records
+    get:
+      parameters:
+      - description: The name of the provider to utilize
+        explode: true
+        in: query
+        name: provider
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: The name of the environment to utilize
+        explode: true
+        in: query
+        name: environment
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: DNS zone to query
+        explode: true
+        in: query
+        name: zone
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: Filter by the record type
+        explode: true
+        in: query
+        name: recordType
+        required: false
+        schema:
+          $ref: '#/components/schemas/RecordType'
+        style: form
+      - description: Filter by the record name
+        explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The token of the page to load
+        explode: true
+        in: query
+        name: pageToken
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The size of the page
+        explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            text/plain:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Record'
+                type: array
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Record'
+                type: array
+            text/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Record'
+                type: array
+          description: Returns the DNS records of the specified DNS zone
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Retrieves the DNS zone's resource records
+      tags:
+      - Records
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecordRequestModel'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecordRequestModel'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/CreateRecordRequestModel'
+        description: Data used to create a DNS resource record
+        required: true
+      responses:
+        "201":
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Record'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+          description: Returns the newly created item
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Creates a new DNS resource record
+      tags:
+      - Records
+  /api/dns/Zones:
+    get:
+      parameters:
+      - description: The name of the provider to utilize
+        explode: true
+        in: query
+        name: provider
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: The name of the environment to utilize
+        explode: true
+        in: query
+        name: environment
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The token of the page to load
+        explode: true
+        in: query
+        name: pageToken
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The size of the page
+        explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Zone'
+                type: array
+          description: List of DNS zones associated with the account
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: DNS zone not found
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Retrieves the DNS zones assigned to the account
+      tags:
+      - Zones
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateZoneRequestModel'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/CreateZoneRequestModel'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/CreateZoneRequestModel'
+        description: Data used to create a DNS zone
+        required: true
+      responses:
+        "201":
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Zone'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: Returns the newly created DNS zone
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Creates a new DNS zone
+      tags:
+      - Zones
+  /api/dns/Zones/{zone}:
+    delete:
+      parameters:
+      - description: The name of the provider to utilize
+        explode: true
+        in: query
+        name: provider
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: The name of the environment to utilize
+        explode: true
+        in: query
+        name: environment
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Name of the DNS zone to delete
+        explode: false
+        in: path
+        name: zone
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Success
+        "204":
+          description: Zone was successfully deleted
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: DNS zone not found
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Deletes a DNS zone from the passed provider
+      tags:
+      - Zones
+    get:
+      parameters:
+      - description: The name of the provider to utilize
+        explode: true
+        in: query
+        name: provider
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: The name of the environment to utilize
+        explode: true
+        in: query
+        name: environment
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Name of the DNS zone to load
+        explode: false
+        in: path
+        name: zone
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Zone'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: Successfully loaded DNS zone
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: DNS zone not found
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Loads the specified DNS zone
+      tags:
+      - Zones
+components:
+  schemas:
+    CreateRecordRequestModel:
+      additionalProperties: false
+      example:
+        environment: environment
+        data: data
+        provider: provider
+        zone: zone
+        name: name
+        ttl: 0
+      properties:
+        provider:
+          type: string
+        environment:
+          nullable: true
+          type: string
+        zone:
+          type: string
+        name:
+          type: string
+        class:
+          $ref: '#/components/schemas/RecordClass'
+        type:
+          $ref: '#/components/schemas/RecordType'
+        data:
+          type: string
+        ttl:
+          format: int32
+          type: integer
+      required:
+      - data
+      - name
+      - provider
+      - type
+      - zone
+      type: object
+    CreateZoneRequestModel:
+      additionalProperties: false
+      example:
+        environment: environment
+        provider: provider
+        name: name
+      properties:
+        provider:
+          type: string
+        environment:
+          nullable: true
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      - provider
+      type: object
+    Record:
+      additionalProperties: false
+      example:
+        data: data
+        name: name
+        class: class
+        ttl: 0
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/RecordType'
+        class:
+          type: string
+        ttl:
+          format: int32
+          type: integer
+        data:
+          type: string
+      required:
+      - class
+      - data
+      - name
+      - type
+      type: object
+    RecordClass:
+      description: "Resource record classes\r\nas defined in\r\n<see href=\"https://tools.ietf.org/html/rfc1035#section-3.2.4\"\
+        >rfc1035</see>"
+      enum:
+      - IN
+      - CS
+      - CH
+      - HS
+      type: string
+    RecordType:
+      description: "Resource record types\r\nas defined in\r\n<see href=\"https://tools.ietf.org/html/rfc1035#section-3.2.2\"\
+        >rfc1035</see>"
+      enum:
+      - A
+      - NS
+      - CNAME
+      - SOA
+      - PTR
+      - MX
+      - TXT
+      - SRV
+      - AAAA
+      - SPF
+      type: string
+    Zone:
+      additionalProperties: false
+      example:
+        name: name
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
+  securitySchemes:
+    oidc:
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.pinto.irgendwo.co/connect/authorize
+          scopes:
+            nexus: Nexus - API
+            openapigateway: OpenApiGateway - API
+          tokenUrl: https://auth.pinto.irgendwo.co/connect/token
+      type: oauth2

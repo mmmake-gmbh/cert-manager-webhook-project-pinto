@@ -2,7 +2,8 @@ package dns
 
 import (
 	"fmt"
-	"gitlab.com/whizus/gopinto"
+	"github.com/sirupsen/logrus"
+	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/gopinto"
 	"strings"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
@@ -50,7 +51,7 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 		CreateRecordRequestModel(record).
 		Execute()
 
-	if creationErr.Error() != "" {
+	if creationErr != nil {
 		return fmt.Errorf("failed to update DNS zone records: %w", creationErr)
 	}
 
@@ -83,7 +84,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 		Provider(p.getConfig().Name()).
 		Execute()
 
-	if deletionErr.Error() != "" {
+	if deletionErr != nil {
 		return fmt.Errorf("failed to delete DNS zone records: %w", deletionErr)
 	}
 
@@ -101,7 +102,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 			CreateRecordRequestModel(recordModel).
 			Execute()
 
-		if creationErr.Error() != "" {
+		if creationErr != nil {
 			return fmt.Errorf("failed to readd previous DNS zone records: %w", creationErr)
 		}
 	}
@@ -118,7 +119,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 // provider accounts.
 // The stopCh can be used to handle early termination of the webhook, in cases
 // where a SIGTERM or similar signal is sent to the webhook process.
-func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, stopCh <-chan struct{}) error {
+func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, _ <-chan struct{}) error {
 
 	cl, err := kubernetes.NewForConfig(kubeClientConfig)
 	if err != nil {

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
 	"github.com/jinzhu/copier"
-	"gitlab.com/whizus/gopinto"
+	"github.com/sirupsen/logrus"
+	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/gopinto"
 	cc "golang.org/x/oauth2/clientcredentials"
 	"strings"
 )
@@ -56,7 +57,7 @@ func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.
 		PageSize(100).
 		Execute()
 
-	if getError.Error() != "" {
+	if getError != nil {
 		logrus.Error(getError)
 		return nil, getError
 	}
@@ -119,7 +120,7 @@ func hasSameNaming(a gopinto.Record, b gopinto.Record) bool {
 }
 
 func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest) gopinto.Record {
-	ttl := int64(ttlDNS)
+	ttl := int32(ttlDNS)
 	return gopinto.Record{
 		Name:  strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), "."),
 		Type:  gopinto.TXT,
