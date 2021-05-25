@@ -1,6 +1,5 @@
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
-ALL_PLATFORM = linux/amd64,linux/arm/v7,linux/arm64
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= pinto
@@ -54,6 +53,10 @@ release: docker-buildx-all
 fmt-fix:
 	gofmt -s -w .
 
+.PHONY: generate
+generate: generate-openapi fmt-fix
+
+.PHONY: generate-openapi
 generate-openapi:
 	openapi-generator-cli generate -g go \
 		-i $(SOURCE_URL) \
@@ -63,3 +66,4 @@ generate-openapi:
 		--git-user-id $(GIT_REPOSITORY_NAMESPACE) \
 		--git-host $(GIT_HOST) \
 		--additional-properties=generateInterfaces=true,isGoSubmodule=true
+	rm internal/gopinto/go.mod internal/gopinto/go.sum
