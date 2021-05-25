@@ -2,12 +2,11 @@ package dns
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/gopinto"
 	"strings"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -35,26 +34,59 @@ func (p *ProviderSolver) Name() string {
 func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 	configErr := p.getConfig().init(p.k8Client, ch)
 	if configErr != nil {
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(configErr)
 		return configErr
 	}
 
 	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(err)
 		return err
 	}
 
 	record, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch), ch.ResolvedZone)
 	if modelErr != nil {
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(modelErr)
 		return modelErr
 	}
 	requestModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.config.getContext()).
 		CreateRecordRequestModel(record)
-	setRecord, response, creationErr := requestModel.Execute()
+
+	log.WithFields(map[string]interface{}{
+		"model":     requestModel,
+		"zone":      ch.ResolvedZone,
+		"fqdn":      ch.ResolvedFQDN,
+		"namespace": ch.ResourceNamespace,
+	}).Trace("Prepared entry creation")
+	_, response, creationErr := requestModel.Execute()
 
 	if creationErr != nil {
-		return fmt.Errorf("failed to update DNS zone records: %w", creationErr)
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(modelErr)
+		return creationErr
 	}
 
+	log.WithFields(map[string]interface{}{
+		"response":  response,
+		"zone":      ch.ResolvedZone,
+		"fqdn":      ch.ResolvedFQDN,
+		"namespace": ch.ResourceNamespace,
+	}).Trace("Successfully created challenge")
 	return nil
 }
 
@@ -67,14 +99,31 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(err)
 		return err
 	}
 
 	//TODO BEGIN replace later when it is possible to delete by ID
 	records, retrieveErr := p.getEntriesToPreserve(ch)
 	if retrieveErr != nil {
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(retrieveErr)
 		return retrieveErr
 	}
+
+	log.WithFields(map[string]interface{}{
+		"records":   records,
+		"zone":      ch.ResolvedZone,
+		"fqdn":      ch.ResolvedFQDN,
+		"namespace": ch.ResourceNamespace,
+	}).Trace("Retrieved list of TXT records to be readded")
 	//TODO END
 
 	deletionModel := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getConfig().getContext()).
@@ -87,11 +136,28 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 		RequestBody(map[string]string{
 			"force": "true",
 		})
-	_, deletionErr := deletionModel.Execute()
+	log.WithFields(map[string]interface{}{
+		"model":     deletionModel,
+		"zone":      ch.ResolvedZone,
+		"fqdn":      ch.ResolvedFQDN,
+		"namespace": ch.ResourceNamespace,
+	}).Trace("Prepared deletion request")
+	deletionResponse, deletionErr := deletionModel.Execute()
 
 	if deletionErr != nil {
-		return fmt.Errorf("failed to delete DNS zone records: %w", deletionErr)
+		log.WithFields(map[string]interface{}{
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).WithError(deletionErr)
+		return deletionErr
 	}
+	log.WithFields(map[string]interface{}{
+		"response":  deletionResponse,
+		"zone":      ch.ResolvedZone,
+		"fqdn":      ch.ResolvedFQDN,
+		"namespace": ch.ResourceNamespace,
+	}).Trace("Successfully deleted entries")
 
 	//TODO BEGIN replace later when it is possible to delete by ID
 
@@ -100,16 +166,39 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 
 		recordModel, modelErr := p.getCreateRecordRequestModel(record, ch.ResolvedZone)
 		if modelErr != nil {
+			log.WithFields(map[string]interface{}{
+				"zone":      ch.ResolvedZone,
+				"fqdn":      ch.ResolvedFQDN,
+				"namespace": ch.ResourceNamespace,
+			}).WithError(modelErr)
 			return modelErr
 		}
 
-		_, _, creationErr := apiClient.RecordsApi.ApiDnsRecordsPost(p.getConfig().getContext()).
-			CreateRecordRequestModel(recordModel).
-			Execute()
+		creationModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.getConfig().getContext()).
+			CreateRecordRequestModel(recordModel)
+		log.WithFields(map[string]interface{}{
+			"model":     creationModel,
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).Trace("Prepared recreation of re-add job")
+		_, response, creationErr := creationModel.Execute()
 
 		if creationErr != nil {
-			return fmt.Errorf("failed to readd previous DNS zone records: %w", creationErr)
+			log.WithFields(map[string]interface{}{
+				"zone":      ch.ResolvedZone,
+				"fqdn":      ch.ResolvedFQDN,
+				"namespace": ch.ResourceNamespace,
+			}).WithError(creationErr)
+			return creationErr
 		}
+
+		log.WithFields(map[string]interface{}{
+			"response":  response,
+			"zone":      ch.ResolvedZone,
+			"fqdn":      ch.ResolvedFQDN,
+			"namespace": ch.ResourceNamespace,
+		}).Trace("Successfully created re-add entry")
 	}
 	//TODO END
 	return nil

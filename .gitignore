@@ -8,6 +8,7 @@
 bin
 main
 cert-manager-webhook-pinto
+target
 
 # Test binary, build with `go test -c`
 *.test

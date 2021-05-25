@@ -63,7 +63,7 @@ func (c *Config) getContext() context.Context {
 }
 
 // Name is used as the name for this DNS solver when referencing it on the ACME
-// Issuer resource. Defaulting to "RRPproxy"
+// Issuer resource. The Provider Name is used here
 func (c *Config) Name() string {
 	return c.Provider()
 }
