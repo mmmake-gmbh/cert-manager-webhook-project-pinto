@@ -2,7 +2,7 @@ OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 
 # Image URL to use all building/pushing image targets
-REGISTRY ?= pinto
+REGISTRY ?= registry.gitlab.com
 IMAGE ?= cert-manager-webhook-pinto
 FULL_IMAGE ?= $(REGISTRY)/$(IMAGE)
 
@@ -37,17 +37,10 @@ clean-kubebuilder:
 	rm -Rf tests/kubebuilder
 
 compile:
-	go build -v -o cert-manager-webhook-pinto main.go
+	CGO_ENABLED=0 go build -v -o target/cert-manager-webhook-pinto main.go
 
 docker-build:
-	@echo "Building cert-manager-webhook-pinto for $(ARCH)"
-	docker build . --platform=$(OS)/$(ARCH) -f Dockerfile -t $(FULL_IMAGE):$(IMAGE_TAG)-$(ARCH)
-
-docker-buildx-all:
-	@echo "Making release for tag $(IMAGE_TAG)"
-	docker buildx build --platform=$(ALL_PLATFORM) --push -t $(FULL_IMAGE):$(IMAGE_TAG) .
-
-release: docker-buildx-all
+	docker build . --platform=$(OS)/$(ARCH) -t $(FULL_IMAGE):$(IMAGE_TAG)-$(ARCH)
 
 .PHONY: fmt-fix
 fmt-fix:
