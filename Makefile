@@ -2,11 +2,11 @@ OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 
 # Image URL to use all building/pushing image targets
-REGISTRY ?= registry.gitlab.com
+REGISTRY ?= registry.gitlab.com/whizus/customer/pinto
 IMAGE ?= cert-manager-webhook-pinto
 FULL_IMAGE ?= $(REGISTRY)/$(IMAGE)
 
-IMAGE_TAG ?= $(shell git rev-parse HEAD)
+IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
 
 # Openapi generator
 PACKAGE ?= "gopinto"
