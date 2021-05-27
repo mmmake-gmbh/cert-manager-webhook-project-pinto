@@ -7,6 +7,7 @@ certManager:
 image:
   repository: pinto/cert-manager-webhook-pinto
   pullPolicy: IfNotPresent
+  tag: ""
 
 nameOverride: ""
 fullnameOverride: ""
