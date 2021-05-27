@@ -18,6 +18,8 @@ pki:
 secret:
   accessKey: ""
   secretKey: ""
+  oauthTokenUrl: ""
+  pintoApiUrl: ""
   name: pinto-webhook-secret
 
 service:
