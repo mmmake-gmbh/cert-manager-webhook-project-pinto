@@ -53,7 +53,6 @@ func TestConfig_Name(t *testing.T) {
 	type fields struct {
 		savedContext context.Context
 	}
-	testValueString := "test_value"
 
 	tests := []struct {
 		name   string
@@ -64,16 +63,9 @@ func TestConfig_Name(t *testing.T) {
 		fields: fields{
 			savedContext: context.Background(),
 		},
-		want: defaultProvider,
+		want: "pinto",
 	},
-		{
-			name: "set string value is returned",
-			fields: fields{
-				savedContext: context.WithValue(context.Background(), providerContextKey, testValueString),
-			},
-			want: testValueString,
-		},
-		// TODO: Add more test cases.
+	// TODO: Add more test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

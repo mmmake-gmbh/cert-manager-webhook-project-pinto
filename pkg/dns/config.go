@@ -20,6 +20,7 @@ const (
 	defaultOAuthClientID     = ""
 	defaultOAuthClientSecret = ""
 	ttlDNS                   = 60
+	webhookName              = "pinto"
 )
 
 const (
@@ -65,7 +66,7 @@ func (c *Config) getContext() context.Context {
 // Name is used as the name for this DNS solver when referencing it on the ACME
 // Issuer resource. The Provider Name is used here
 func (c *Config) Name() string {
-	return c.Provider()
+	return webhookName
 }
 
 // Environment is referencing the environment of the Pinto API. Defaults to the prod1 environment
