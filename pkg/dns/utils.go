@@ -53,8 +53,8 @@ func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.
 		Zone(ch.ResolvedZone).
 		Environment(p.getConfig().Environment()).
 		RecordType(gopinto.TXT).
-		Provider(p.getConfig().Name()).
-		PageSize(100).
+		Provider(p.getConfig().Provider()).
+		PageSize(pagingSize).
 		Execute()
 
 	if getError != nil {

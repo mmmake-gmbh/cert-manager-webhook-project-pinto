@@ -131,7 +131,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 		Zone(ch.ResolvedZone).
 		Environment(p.getConfig().Environment()).
 		RecordType(gopinto.TXT).
-		Provider(p.getConfig().Name()).
+		Provider(p.getConfig().Provider()).
 		// if multiple entries with the same name are defined, we have to force the deletion of all
 		RequestBody(map[string]string{
 			"force": "true",
