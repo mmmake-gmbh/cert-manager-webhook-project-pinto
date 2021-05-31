@@ -378,12 +378,8 @@ func Test_loadConfig(t *testing.T) {
 	testConfig.SecretKey = new(v1.SecretKeySelector)
 	testConfig.SecretKey.Name = "test-secret"
 	testConfig.SecretKey.Key = "PINTO_OAUTH_CLIENT_SECRET"
-	testConfig.PintoApiUrl = new(v1.SecretKeySelector)
-	testConfig.PintoApiUrl.Name = "test-secret"
-	testConfig.PintoApiUrl.Key = "PINTO_API_URL"
-	testConfig.OauthTokenUrl = new(v1.SecretKeySelector)
-	testConfig.OauthTokenUrl.Name = "test-secret"
-	testConfig.OauthTokenUrl.Key = "PINTO_OAUTH_TOKEN_URL"
+	testConfig.PintoApiUrl = "https://test.api.com"
+	testConfig.OauthTokenUrl = "https://test.api.com/oauth/token"
 
 	tests := []struct {
 		name    string

@@ -7,12 +7,7 @@
     "name": "pinto-secret",
     "key": "PINTO_OAUTH_CLIENT_SECRET"
   },
-  "pintoApiUrlSecretRef": {
-    "name": "pinto-secret",
-    "key": "PINTO_API_URL"
-  },
-  "oauthTokenUrlSecretRef": {
-    "name": "pinto-secret",
-    "key": "PINTO_OAUTH_TOKEN_URL"
-  }
+  "pintoProvider": "digitalocean",
+  "pintoApiUrl": "https://pinto.irgendwo.co",
+  "oauthTokenUrl": "https://auth.pinto.irgendwo.co/connect/token"
 }

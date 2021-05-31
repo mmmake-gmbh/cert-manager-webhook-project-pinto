@@ -34,6 +34,7 @@ const (
 )
 
 const (
+	pintoProviderEnvName     = "PINTO_PROVIDER"
 	oauthClientIDEnvName     = "PINTO_OAUTH_CLIENT_ID"
 	oauthClientSecretEnvName = "PINTO_OAUTH_CLIENT_SECRET"
 	pintoApiUrlEnvName       = "PINTO_API_URL"
@@ -55,8 +56,9 @@ type Config struct {
 type ProviderConfig struct {
 	AccessKey     *v1.SecretKeySelector `json:"accessKeySecretRef,omitempty"`
 	SecretKey     *v1.SecretKeySelector `json:"secretKeySecretRef,omitempty"`
-	PintoApiUrl   *v1.SecretKeySelector `json:"pintoApiUrlSecretRef,omitempty"`
-	OauthTokenUrl *v1.SecretKeySelector `json:"oauthTokenUrlSecretRef,omitempty"`
+	PintoProvider string                `json:"pintoProvider,omitempty"`
+	PintoApiUrl   string                `json:"pintoApiUrl,omitempty"`
+	OauthTokenUrl string                `json:"oauthTokenUrl,omitempty"`
 }
 
 func (c *Config) getContext() context.Context {
@@ -166,33 +168,37 @@ func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeReque
 	enrichedContext = context.WithValue(enrichedContext, oauthClientIDContextKey, accessKey)
 	enrichedContext = context.WithValue(enrichedContext, oauthClientSecretContextKey, secretKey)
 
+	// Pinto provider
+	pintoProvider := defaultProvider
+	pintoProviderEnvironment := os.Getenv(pintoProviderEnvName)
+	if pintoProviderEnvironment != "" {
+		pintoProvider = pintoProviderEnvironment
+	}
+	if config.PintoProvider != "" {
+		pintoProvider = config.PintoProvider
+	}
+	enrichedContext = context.WithValue(enrichedContext, providerContextKey, pintoProvider)
+
 	// evaluate API url
-	pintoApiUrl := os.Getenv(pintoApiUrlEnvName)
-	if config.PintoApiUrl != nil {
-		pintoApiUrlSecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.PintoApiUrl.Name, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("could not get secret %s: %w", config.PintoApiUrl.Name, err)
-		}
-		pintoApiUrlData, ok := pintoApiUrlSecret.Data[config.PintoApiUrl.Key]
-		if !ok {
-			return fmt.Errorf("could not get key %s in secret %s", config.PintoApiUrl.Key, config.PintoApiUrl.Name)
-		}
-		pintoApiUrl = string(pintoApiUrlData)
+	pintoApiUrl := defaultPintoApiURL
+
+	pintoApiUrlEnvironment := os.Getenv(pintoApiUrlEnvName)
+	if pintoApiUrlEnvironment != "" {
+		pintoApiUrl = pintoApiUrlEnvironment
+	}
+	if config.PintoApiUrl != "" {
+		pintoApiUrl = config.PintoApiUrl
 	}
 	enrichedContext = context.WithValue(enrichedContext, pintoApiUrlContextKey, pintoApiUrl)
 
 	// evaluate oauth Token URL
-	oauthTokenUrl := os.Getenv(oauthTokenUrlEnvName)
-	if config.OauthTokenUrl != nil {
-		oauthTokenUrlSecret, err := k8Client.CoreV1().Secrets(ch.ResourceNamespace).Get(context.Background(), config.OauthTokenUrl.Name, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("could not get secret %s: %w", config.OauthTokenUrl.Name, err)
-		}
-		oauthTokenUrlData, ok := oauthTokenUrlSecret.Data[config.OauthTokenUrl.Key]
-		if !ok {
-			return fmt.Errorf("could not get key %s in secret %s", config.OauthTokenUrl.Key, config.OauthTokenUrl.Name)
-		}
-		oauthTokenUrl = string(oauthTokenUrlData)
+	oauthTokenUrl := defaultOAuthTokenURL
+	oauthTokenUrlEnvironment := os.Getenv(oauthTokenUrlEnvName)
+	if oauthTokenUrlEnvironment != "" {
+		oauthTokenUrl = oauthTokenUrlEnvironment
+	}
+	if config.OauthTokenUrl != "" {
+		oauthTokenUrl = config.OauthTokenUrl
 	}
 	enrichedContext = context.WithValue(enrichedContext, oauthCTokenUrlContextKey, oauthTokenUrl)
 

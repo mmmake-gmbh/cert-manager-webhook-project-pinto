@@ -7,12 +7,6 @@
     "name": "test-secret",
     "key": "PINTO_OAUTH_CLIENT_SECRET"
   },
-  "pintoApiUrlSecretRef": {
-    "name": "test-secret",
-    "key": "PINTO_API_URL"
-  },
-  "oauthTokenUrlSecretRef": {
-    "name": "test-secret",
-    "key": "PINTO_OAUTH_TOKEN_URL"
-  }
+  "pintoApiUrl" : "https://test.api.com",
+  "oauthTokenUrl" : "https://test.api.com/oauth/token"
 }

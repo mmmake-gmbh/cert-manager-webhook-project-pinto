@@ -214,6 +214,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 // The stopCh can be used to handle early termination of the webhook, in cases
 // where a SIGTERM or similar signal is sent to the webhook process.
 func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, _ <-chan struct{}) error {
+	log.Debug("Initialize kube client ...")
 
 	cl, err := kubernetes.NewForConfig(kubeClientConfig)
 	if err != nil {
@@ -222,5 +223,6 @@ func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, _ <-chan stru
 
 	p.k8Client = cl
 
+	log.Debug("Initialization kube client is finished")
 	return nil
 }

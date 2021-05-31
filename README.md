@@ -87,6 +87,10 @@ spec:
             secretKeySecretRef:
               key: PINTO_OAUTH_CLIENT_SECRET
               name: pinto-secret
+            # optional ->
+            pintoProvider: "digitalocean"
+            pintoApiUrl: "https://pinto.irgendwo.co"
+            oauthTokenUrl: "https://auth.pinto.irgendwo.co/connect/token"
 ```
 
 And run:
