@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	defaultProvider          = "RRPproxy"
+	defaultProvider          = "hexonet"
 	defaultEnvironment       = "prod1"
-	defaultPintoApiURL       = "https://pinto.irgendwo.co"
-	defaultOAuthTokenURL     = "https://auth.pinto.irgendwo.co/connect/token"
+	defaultPintoApiURL       = "https://api.stackit.domains"
+	defaultOAuthTokenURL     = "https://auth.api.stackit.domains/connect/token"
 	defaultOAuthClientID     = ""
 	defaultOAuthClientSecret = ""
 	ttlDNS                   = 60
