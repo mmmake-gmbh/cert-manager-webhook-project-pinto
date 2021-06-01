@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/gopinto"
+	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/logutils"
 	"strings"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"
@@ -32,61 +33,38 @@ func (p *ProviderSolver) Name() string {
 // cert-manager itself will later perform a self check to ensure that the
 // solver has correctly configured the DNS provider.
 func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
+	log.WithFields(logutils.CreateChallengeFields(ch)).Info("Presenting new challenge ...")
 	configErr := p.getConfig().init(p.k8Client, ch)
 	if configErr != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(configErr)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(configErr).Error("Failed to retrieve configuration")
 		return configErr
 	}
 
 	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(err)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(err).Error("Failed to retrieve API client")
 		return err
 	}
 
 	record, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch), ch.ResolvedZone)
 	if modelErr != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(modelErr)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(modelErr).Error("Failed to create request model for entry creation")
 		return modelErr
 	}
 	requestModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.config.getContext()).
 		CreateRecordRequestModel(record)
 
-	log.WithFields(map[string]interface{}{
-		"model":     requestModel,
-		"zone":      ch.ResolvedZone,
-		"fqdn":      ch.ResolvedFQDN,
-		"namespace": ch.ResourceNamespace,
-	}).Trace("Prepared entry creation")
+	log.WithFields(logutils.CreateModelFields(ch, requestModel)).Trace("Prepared entry creation")
 	_, response, creationErr := requestModel.Execute()
 
 	if creationErr != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(modelErr)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(creationErr).Error("API returned failure during challenge creation")
 		return creationErr
 	}
 
-	log.WithFields(map[string]interface{}{
-		"response":  response,
-		"zone":      ch.ResolvedZone,
-		"fqdn":      ch.ResolvedFQDN,
-		"namespace": ch.ResourceNamespace,
-	}).Trace("Successfully created challenge")
+	log.WithFields(logutils.CreateResponseFields(ch, response)).Trace("Successfully created challenge")
+
+	log.WithFields(logutils.CreateChallengeFields(ch)).Info("Presenting new challenge finished")
 	return nil
 }
 
@@ -97,33 +75,22 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 // This is in order to facilitate multiple DNS validations for the same domain
 // concurrently.
 func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
+	log.WithFields(logutils.CreateChallengeFields(ch)).Info("Cleaning up ...")
+
 	apiClient, err := p.getDomainAPIClient()
 	if err != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(err)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(err).Error()
 		return err
 	}
 
 	//TODO BEGIN replace later when it is possible to delete by ID
 	records, retrieveErr := p.getEntriesToPreserve(ch)
 	if retrieveErr != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(retrieveErr)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(retrieveErr).Error("Failed to retrieve existing DNS records")
 		return retrieveErr
 	}
 
-	log.WithFields(map[string]interface{}{
-		"records":   records,
-		"zone":      ch.ResolvedZone,
-		"fqdn":      ch.ResolvedFQDN,
-		"namespace": ch.ResourceNamespace,
-	}).Trace("Retrieved list of TXT records to be readded")
+	log.WithFields(logutils.CreateChallengeFields(ch)).Trace("Retrieved list of TXT records to be readded")
 	//TODO END
 
 	deletionModel := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getConfig().getContext()).
@@ -136,28 +103,14 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 		RequestBody(map[string]string{
 			"force": "true",
 		})
-	log.WithFields(map[string]interface{}{
-		"model":     deletionModel,
-		"zone":      ch.ResolvedZone,
-		"fqdn":      ch.ResolvedFQDN,
-		"namespace": ch.ResourceNamespace,
-	}).Trace("Prepared deletion request")
+	log.WithFields(logutils.CreateModelFields(ch, deletionModel)).Trace("Prepared deletion request")
 	deletionResponse, deletionErr := deletionModel.Execute()
 
 	if deletionErr != nil {
-		log.WithFields(map[string]interface{}{
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).WithError(deletionErr)
+		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(deletionErr).Error("API returned failure during entry deletion")
 		return deletionErr
 	}
-	log.WithFields(map[string]interface{}{
-		"response":  deletionResponse,
-		"zone":      ch.ResolvedZone,
-		"fqdn":      ch.ResolvedFQDN,
-		"namespace": ch.ResourceNamespace,
-	}).Trace("Successfully deleted entries")
+	log.WithFields(logutils.CreateResponseFields(ch, deletionResponse)).Trace("Successfully deleted entries")
 
 	//TODO BEGIN replace later when it is possible to delete by ID
 
@@ -166,41 +119,24 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 
 		recordModel, modelErr := p.getCreateRecordRequestModel(record, ch.ResolvedZone)
 		if modelErr != nil {
-			log.WithFields(map[string]interface{}{
-				"zone":      ch.ResolvedZone,
-				"fqdn":      ch.ResolvedFQDN,
-				"namespace": ch.ResourceNamespace,
-			}).WithError(modelErr)
+			log.WithFields(logutils.CreateChallengeFields(ch)).WithError(modelErr).Error("Failed to create request model for recreation of entry")
 			return modelErr
 		}
 
 		creationModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.getConfig().getContext()).
 			CreateRecordRequestModel(recordModel)
-		log.WithFields(map[string]interface{}{
-			"model":     creationModel,
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).Trace("Prepared recreation of re-add job")
+		log.WithFields(logutils.CreateModelFields(ch, creationModel)).Trace("Prepared recreation of re-add job")
 		_, response, creationErr := creationModel.Execute()
 
 		if creationErr != nil {
-			log.WithFields(map[string]interface{}{
-				"zone":      ch.ResolvedZone,
-				"fqdn":      ch.ResolvedFQDN,
-				"namespace": ch.ResourceNamespace,
-			}).WithError(creationErr)
+			log.WithFields(logutils.CreateChallengeFields(ch)).WithError(creationErr).Error("API returned failure during recreation of entries")
 			return creationErr
 		}
 
-		log.WithFields(map[string]interface{}{
-			"response":  response,
-			"zone":      ch.ResolvedZone,
-			"fqdn":      ch.ResolvedFQDN,
-			"namespace": ch.ResourceNamespace,
-		}).Trace("Successfully created re-add entry")
+		log.WithFields(logutils.CreateResponseFields(ch, response)).Trace("Successfully created re-add entry")
 	}
 	//TODO END
+	log.WithFields(logutils.CreateChallengeFields(ch)).Info("Cleaning up finished")
 	return nil
 }
 
@@ -214,7 +150,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 // The stopCh can be used to handle early termination of the webhook, in cases
 // where a SIGTERM or similar signal is sent to the webhook process.
 func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, _ <-chan struct{}) error {
-	log.Debug("Initialize kube client ...")
+	log.Info("Initialize kube client ...")
 
 	cl, err := kubernetes.NewForConfig(kubeClientConfig)
 	if err != nil {
@@ -223,6 +159,6 @@ func (p *ProviderSolver) Initialize(kubeClientConfig *rest.Config, _ <-chan stru
 
 	p.k8Client = cl
 
-	log.Debug("Initialization kube client is finished")
+	log.Info("Initialization kube client is finished")
 	return nil
 }
