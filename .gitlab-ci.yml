@@ -1,5 +1,5 @@
 default:
-  image: golang:1.16.4-alpine
+  image: golang:1.16.5-alpine
 
 stages:
   - lint
