@@ -1,13 +1,13 @@
 # Cert Manager Webhook for Pinto DNS
 //TODO replace URLs    
-Cert Manager Webhook for Pinto DNS is a ACME webhook for [cert-manager](https://cert-manager.io/) allowing users to use [Pinto DNS](https://www.pinto.com/en/docs/pinto-dns/) for DNS01 challenge.
+Cert Manager Webhook for Pinto DNS is a ACME webhook for [cert-manager](https://cert-manager.io/) allowing users to use [Pinto DNS](//TODO) for DNS01 challenge.
 
 ## Getting started
 
 ### Prerequisites
 
-- A [Pinto Access Key and a Pinto Secret Key](https://www.pinto.com/en/docs/generate-api-keys/)
-- A valid domain configured on [Pinto DNS](https://www.pinto.com/en/docs/pinto-dns/)
+- A [Pinto Access Key and a Pinto Secret Key](//TODO)
+- A valid domain configured on [Pinto DNS](//TODO)
 - A Kubernetes cluster (v1.19+ recommended)
 - [Helm 3](https://helm.sh/) [installed](https://helm.sh/docs/intro/install/) on your computer
 - [cert-manager](https://github.com/jetstack/cert-manager) deployed on the cluster:
