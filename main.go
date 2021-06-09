@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/camaoag/cert-manager-webhook-project-pinto/pkg/dns"
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/cmd"
 	log "github.com/sirupsen/logrus"
-	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/pkg/dns"
 	"os"
 )
 

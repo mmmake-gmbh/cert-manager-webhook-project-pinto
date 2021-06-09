@@ -2,9 +2,9 @@ package dns
 
 import (
 	"fmt"
+	"github.com/camaoag/cert-manager-webhook-project-pinto/internal/gopinto"
+	"github.com/camaoag/cert-manager-webhook-project-pinto/internal/logutils"
 	log "github.com/sirupsen/logrus"
-	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/gopinto"
-	"gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/internal/logutils"
 	"strings"
 
 	"github.com/jetstack/cert-manager/pkg/acme/webhook/apis/acme/v1alpha1"

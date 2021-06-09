@@ -1,4 +1,4 @@
-module gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto
+module github.com/camaoag/cert-manager-webhook-project-pinto
 
 go 1.16
 

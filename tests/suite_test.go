@@ -8,7 +8,7 @@ import (
 
 	"github.com/jetstack/cert-manager/test/acme/dns"
 
-	pinto "gitlab.com/whizus/customer/pinto/cert-manager-webhook-pinto/pkg/dns"
+	pinto "github.com/camaoag/cert-manager-webhook-project-pinto/pkg/dns"
 )
 
 var (
