@@ -19,6 +19,6 @@ lint:
 build:
   stage: test
   before_script:
-    - apk add make build-base
+    - apk add make build-base curl
   script:
     - make test
