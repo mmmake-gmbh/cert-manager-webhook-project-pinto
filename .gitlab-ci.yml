@@ -3,6 +3,7 @@ default:
 
 stages:
   - lint
+  - test
 
 
 lint:
@@ -14,3 +15,8 @@ lint:
           printf "Following files are not formatted: \n%s" "$FILES"
           exit 1
       fi
+
+build:
+  stage: test
+  script:
+    - make test
