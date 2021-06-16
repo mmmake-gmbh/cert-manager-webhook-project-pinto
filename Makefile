@@ -22,8 +22,12 @@ KUBEBUILDER_VERSION=2.3.1
 TEST_ZONE_NAME ?= example.com.
 
 # Run tests
-test: tests/kubebuilder
+test: unit-test tests/kubebuilder
 	TEST_ZONE_NAME=$(TEST_ZONE_NAME) go test -v ./... -coverprofile cover.out
+
+.PHONY: unit-test
+unit-test:
+	go test -v -race ./pkg/...
 
 tests/kubebuilder:
 	curl -fsSL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH).tar.gz -o kubebuilder-tools.tar.gz
@@ -41,6 +45,14 @@ compile:
 
 docker-build:
 	docker build . --platform=$(OS)/$(ARCH) -t $(FULL_IMAGE):$(IMAGE_TAG)-$(ARCH)
+
+.PHONY: get-dependencies
+get-dependencies:
+	go get -v -t -d ./...
+
+.PHONY: vet
+vet:
+	go vet ./...
 
 .PHONY: fmt-fix
 fmt-fix:
