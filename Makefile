@@ -40,7 +40,7 @@ tests/kubebuilder:
 clean-kubebuilder:
 	rm -Rf tests/kubebuilder
 
-compile:
+build:
 	CGO_ENABLED=0 go build -v -o target/cert-manager-webhook-pinto main.go
 
 docker-build:
