@@ -20,7 +20,7 @@ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/relea
 Once everything is set up, you can now install the Pinto Webhook:
 - Clone this repository: 
 ```bash
-git clone https://gitlab.com/whizus/cert-manager-webhook-pinto.git
+git clone https://github.com/camaoag/cert-manager-webhook-project-pinto.git
 ```
 
 - Run:
