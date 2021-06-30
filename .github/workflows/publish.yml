@@ -1,4 +1,7 @@
-on: release
+name: Docker-Publish
+
+on:
+ - release
 
 jobs:
   docker:
@@ -10,6 +13,9 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Setup build env
+        run: echo "BUILD_TARGET=${GITHUB_REF##*/}" >> $GITHUB_ENV
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -20,6 +26,4 @@ jobs:
         with:
           context: .
           push: true
-          tags:
-            - camao/cert-manager-webhook-project-pinto:latest
-            - camao/cert-manager-webhook-project-pinto:$GITHUB_REF
+          tags: camao/cert-manager-webhook-project-pinto:latest,camao/cert-manager-webhook-project-pinto:${{ env.BUILD_TARGET }}
