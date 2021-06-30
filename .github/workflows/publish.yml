@@ -1,7 +1,9 @@
 name: Docker-Publish
 
 on:
- - release
+  release:
+    types:
+      - created
 
 jobs:
   docker:
