@@ -4,20 +4,18 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Provider** | **string** |  | 
-**Environment** | Pointer to **NullableString** |  | [optional] 
-**Zone** | **string** |  | 
-**Name** | **string** |  | 
+**Zone** | **string** | Name of the DNS zone to create a record for. | 
+**Name** | **string** | Name of the DNS record to create. | 
 **Class** | Pointer to [**RecordClass**](RecordClass.md) |  | [optional] 
 **Type** | [**RecordType**](RecordType.md) |  | 
-**Data** | **string** |  | 
-**Ttl** | Pointer to **int32** |  | [optional] 
+**Data** | **string** | The data of the record to create, | 
+**Ttl** | Pointer to **int32** | The time to live of the record to create. | [optional] 
 
 ## Methods
 
 ### NewCreateRecordRequestModel
 
-`func NewCreateRecordRequestModel(provider string, zone string, name string, type_ RecordType, data string, ) *CreateRecordRequestModel`
+`func NewCreateRecordRequestModel(zone string, name string, type_ RecordType, data string, ) *CreateRecordRequestModel`
 
 NewCreateRecordRequestModel instantiates a new CreateRecordRequestModel object
 This constructor will assign default values to properties that have it defined,
@@ -32,61 +30,6 @@ NewCreateRecordRequestModelWithDefaults instantiates a new CreateRecordRequestMo
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetProvider
-
-`func (o *CreateRecordRequestModel) GetProvider() string`
-
-GetProvider returns the Provider field if non-nil, zero value otherwise.
-
-### GetProviderOk
-
-`func (o *CreateRecordRequestModel) GetProviderOk() (*string, bool)`
-
-GetProviderOk returns a tuple with the Provider field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetProvider
-
-`func (o *CreateRecordRequestModel) SetProvider(v string)`
-
-SetProvider sets Provider field to given value.
-
-
-### GetEnvironment
-
-`func (o *CreateRecordRequestModel) GetEnvironment() string`
-
-GetEnvironment returns the Environment field if non-nil, zero value otherwise.
-
-### GetEnvironmentOk
-
-`func (o *CreateRecordRequestModel) GetEnvironmentOk() (*string, bool)`
-
-GetEnvironmentOk returns a tuple with the Environment field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetEnvironment
-
-`func (o *CreateRecordRequestModel) SetEnvironment(v string)`
-
-SetEnvironment sets Environment field to given value.
-
-### HasEnvironment
-
-`func (o *CreateRecordRequestModel) HasEnvironment() bool`
-
-HasEnvironment returns a boolean if a field has been set.
-
-### SetEnvironmentNil
-
-`func (o *CreateRecordRequestModel) SetEnvironmentNil(b bool)`
-
- SetEnvironmentNil sets the value for Environment to be an explicit nil
-
-### UnsetEnvironment
-`func (o *CreateRecordRequestModel) UnsetEnvironment()`
-
-UnsetEnvironment ensures that no value is present for Environment, not even an explicit nil
 ### GetZone
 
 `func (o *CreateRecordRequestModel) GetZone() string`

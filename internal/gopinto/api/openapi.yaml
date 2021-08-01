@@ -1,82 +1,56 @@
 openapi: 3.0.1
 info:
-  description: |
-    <h1>Additional info</h1>
-    <h2><a href="/nexus-info">Nexus Info (DNS - CloudProviders)</h2></a>
-
-    <h2><a href="/markdown/OPENAPIGATEWAY-USAGE.MD">OPENAPIGATEWAY-USAGE.MD</h2></a>
-    <h2><a href="/markdown/CHANGELOG.md">CHANGELOG.md</h2></a>
-    <h2><a href="/markdown/version.md">version.md</h2></a>
-  title: Pinto - OpenApi Gateway - DNS
+  title: Fava - OpenApi Gateway - DNS
   version: v1
 servers:
 - url: /
 security:
 - oidc:
-  - nexus
-  - openapigateway
+  - fava_business_api
+  - fava_credentials_api
+  - fava_openapi_gateway
+  - pinto_citadel
+  - pinto_nexus
 paths:
-  /api/dns/Records:
+  /dns/api/Records:
     delete:
       parameters:
-      - description: The name of the provider to utilize
+      - description: Name of the DNS zone to delete a record of.
         explode: true
         in: query
-        name: provider
+        name: Zone
         required: true
         schema:
           type: string
         style: form
-      - description: The name of the environment to utilize
+      - description: The record type of the record to delete.
         explode: true
         in: query
-        name: environment
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: DNS zone to delete records of
-        explode: true
-        in: query
-        name: zone
-        required: true
-        schema:
-          type: string
-        style: form
-      - description: Name of the DNS record(s) to delete
-        explode: true
-        in: query
-        name: name
-        required: true
-        schema:
-          type: string
-        style: form
-      - description: RecordType of the DNS record(s) to delete
-        explode: true
-        in: query
-        name: recordType
+        name: RecordType
         required: true
         schema:
           $ref: '#/components/schemas/RecordType'
         style: form
-      requestBody:
-        content:
-          application/json:
-            schema:
-              additionalProperties:
-                type: string
-              type: object
-          text/json:
-            schema:
-              additionalProperties:
-                type: string
-              type: object
-          application/*+json:
-            schema:
-              additionalProperties:
-                type: string
-              type: object
-        description: Meta data to pass through to the provider
+      - description: The record name of the record to delete.
+        explode: true
+        in: query
+        name: Name
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
+        explode: false
+        in: header
+        name: x-api-options
+        required: true
+        schema:
+          $ref: '#/components/schemas/ApiOptions'
+        style: simple
       responses:
         "200":
           description: Success
@@ -90,66 +64,45 @@ paths:
           description: Something went horribly wrong on the server side.
       summary: Deletes records which match the specified criterias
       tags:
-      - Records
+      - Record
     get:
       parameters:
-      - description: The name of the provider to utilize
+      - description: DNS zone to query.
         explode: true
         in: query
-        name: provider
+        name: Zone
         required: true
         schema:
           type: string
         style: form
-      - description: The name of the environment to utilize
+      - description: Filter by the record type.
         explode: true
         in: query
-        name: environment
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: DNS zone to query
-        explode: true
-        in: query
-        name: zone
-        required: true
-        schema:
-          type: string
-        style: form
-      - description: Filter by the record type
-        explode: true
-        in: query
-        name: recordType
+        name: RecordType
         required: false
         schema:
           $ref: '#/components/schemas/RecordType'
         style: form
-      - description: Filter by the record name
+      - description: Filter by the record name.
         explode: true
         in: query
-        name: name
+        name: Name
         required: false
         schema:
           type: string
         style: form
-      - description: The token of the page to load
-        explode: true
-        in: query
-        name: pageToken
-        required: false
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
+        explode: false
+        in: header
+        name: x-api-options
+        required: true
         schema:
-          type: string
-        style: form
-      - description: The size of the page
-        explode: true
-        in: query
-        name: pageSize
-        required: false
-        schema:
-          format: int32
-          type: integer
-        style: form
+          $ref: '#/components/schemas/ApiOptions'
+        style: simple
       responses:
         "200":
           content:
@@ -177,8 +130,21 @@ paths:
           description: Something went horribly wrong on the server side.
       summary: Retrieves the DNS zone's resource records
       tags:
-      - Records
+      - Record
     post:
+      parameters:
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
+        explode: false
+        in: header
+        name: x-api-options
+        required: true
+        schema:
+          $ref: '#/components/schemas/ApiOptions'
+        style: simple
       requestBody:
         content:
           application/json:
@@ -215,43 +181,60 @@ paths:
           description: Something went horribly wrong on the server side.
       summary: Creates a new DNS resource record
       tags:
-      - Records
-  /api/dns/Zones:
-    get:
+      - Record
+  /dns/api/Zones:
+    delete:
       parameters:
-      - description: The name of the provider to utilize
+      - description: Name of the DNS zone to delete.
         explode: true
         in: query
-        name: provider
+        name: Name
         required: true
         schema:
           type: string
         style: form
-      - description: The name of the environment to utilize
-        explode: true
-        in: query
-        name: environment
-        required: false
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
+        explode: false
+        in: header
+        name: x-api-options
+        required: true
         schema:
-          type: string
-        style: form
-      - description: The token of the page to load
-        explode: true
-        in: query
-        name: pageToken
-        required: false
+          $ref: '#/components/schemas/ApiOptions'
+        style: simple
+      responses:
+        "200":
+          description: Success
+        "204":
+          description: Zone was successfully deleted
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: DNS zone not found
+        "500":
+          description: Something went horribly wrong on the server side.
+      summary: Deletes a DNS zone from the passed provider
+      tags:
+      - Zone
+    get:
+      parameters:
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
+        explode: false
+        in: header
+        name: x-api-options
+        required: true
         schema:
-          type: string
-        style: form
-      - description: The size of the page
-        explode: true
-        in: query
-        name: pageSize
-        required: false
-        schema:
-          format: int32
-          type: integer
-        style: form
+          $ref: '#/components/schemas/ApiOptions'
+        style: simple
       responses:
         "200":
           content:
@@ -271,8 +254,21 @@ paths:
           description: Something went horribly wrong on the server side.
       summary: Retrieves the DNS zones assigned to the account
       tags:
-      - Zones
+      - Zone
     post:
+      parameters:
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
+        explode: false
+        in: header
+        name: x-api-options
+        required: true
+        schema:
+          $ref: '#/components/schemas/ApiOptions'
+        style: simple
       requestBody:
         content:
           application/json:
@@ -309,27 +305,11 @@ paths:
           description: Something went horribly wrong on the server side.
       summary: Creates a new DNS zone
       tags:
-      - Zones
-  /api/dns/Zones/{zone}:
-    delete:
+      - Zone
+  /dns/api/Zones/{zone}:
+    get:
       parameters:
-      - description: The name of the provider to utilize
-        explode: true
-        in: query
-        name: provider
-        required: true
-        schema:
-          type: string
-        style: form
-      - description: The name of the environment to utilize
-        explode: true
-        in: query
-        name: environment
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Name of the DNS zone to delete
+      - description: The name of the zone to query.
         explode: false
         in: path
         name: zone
@@ -337,47 +317,17 @@ paths:
         schema:
           type: string
         style: simple
-      responses:
-        "200":
-          description: Success
-        "204":
-          description: Zone was successfully deleted
-        "400":
-          description: Bad request
-        "401":
-          description: Unauthorized
-        "404":
-          description: DNS zone not found
-        "500":
-          description: Something went horribly wrong on the server side.
-      summary: Deletes a DNS zone from the passed provider
-      tags:
-      - Zones
-    get:
-      parameters:
-      - description: The name of the provider to utilize
-        explode: true
-        in: query
-        name: provider
-        required: true
-        schema:
-          type: string
-        style: form
-      - description: The name of the environment to utilize
-        explode: true
-        in: query
-        name: environment
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Name of the DNS zone to load
+      - description: "Data used to access the API <br /><br />\r\nSchema: <br />\r\
+          \n{ <br />\r\n\"access_options\": { <br />\r\n\"provider\": \"provider\"\
+          , <br />\r\n\"environment\": \"environment\", <br />\r\n\"credentials_id\"\
+          : \"00000000-0000-0000-0000-000000000000\" <br />\r\n}, <br />\r\n\"meta\"\
+          : { <br />\r\n\"additionalKey\": \"keyValue\" <br />\r\n} <br />\r\n}"
         explode: false
-        in: path
-        name: zone
+        in: header
+        name: x-api-options
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/ApiOptions'
         style: simple
       responses:
         "200":
@@ -402,68 +352,74 @@ paths:
           description: Something went horribly wrong on the server side.
       summary: Loads the specified DNS zone
       tags:
-      - Zones
+      - Zone
 components:
   schemas:
-    CreateRecordRequestModel:
-      additionalProperties: false
-      example:
-        environment: environment
-        data: data
-        provider: provider
-        zone: zone
-        name: name
-        ttl: 0
+    ApiOptions:
+      properties:
+        access_options:
+          $ref: '#/components/schemas/AccessOptions'
+        meta:
+          additionalProperties:
+            type: string
+          type: object
+      type: string
+    AccessOptions:
       properties:
         provider:
           type: string
         environment:
-          nullable: true
           type: string
+        credentials_id:
+          type: string
+      type: object
+    CreateRecordRequestModel:
+      additionalProperties: false
+      example:
+        data: data
+        zone: zone
+        name: name
+        ttl: 0
+      properties:
         zone:
+          description: Name of the DNS zone to create a record for.
           type: string
         name:
+          description: Name of the DNS record to create.
           type: string
         class:
           $ref: '#/components/schemas/RecordClass'
         type:
           $ref: '#/components/schemas/RecordType'
         data:
+          description: The data of the record to create,
           type: string
         ttl:
+          description: The time to live of the record to create.
           format: int32
           type: integer
       required:
       - data
       - name
-      - provider
       - type
       - zone
       type: object
     CreateZoneRequestModel:
       additionalProperties: false
       example:
-        environment: environment
-        provider: provider
         name: name
       properties:
-        provider:
-          type: string
-        environment:
-          nullable: true
-          type: string
         name:
+          description: Name of the DNS zone to create.
           type: string
       required:
       - name
-      - provider
       type: object
     Record:
       additionalProperties: false
       example:
         data: data
         name: name
-        class: class
         ttl: 0
       properties:
         name:
@@ -471,7 +427,7 @@ components:
         type:
           $ref: '#/components/schemas/RecordType'
         class:
-          type: string
+          $ref: '#/components/schemas/RecordClass'
         ttl:
           format: int32
           type: integer
@@ -521,9 +477,12 @@ components:
     oidc:
       flows:
         authorizationCode:
-          authorizationUrl: https://auth.pinto.irgendwo.co/connect/authorize
+          authorizationUrl: https://localhost:9100/connect/authorize
           scopes:
-            nexus: Nexus - API
-            openapigateway: OpenApiGateway - API
-          tokenUrl: https://auth.pinto.irgendwo.co/connect/token
+            fava_business_api: Fava - Business - API
+            fava_credentials_api: Fava - Credentials - API
+            fava_openapi_gateway: Fava - OpenApiGateway - API
+            pinto_citadel: Pinto - Citadel - Certificates - API
+            pinto_nexus: Pinto - Nexus - DNS - API
+          tokenUrl: https://localhost:9100/connect/token
       type: oauth2

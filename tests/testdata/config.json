@@ -8,6 +8,7 @@
     "key": "PINTO_OAUTH_CLIENT_SECRET"
   },
   "pintoProvider": "digitalocean",
-  "pintoApiUrl": "https://pinto.irgendwo.co",
-  "oauthTokenUrl": "https://auth.pinto.irgendwo.co/connect/token"
+  "pintoApiUrl": "https://test.camao.domains.fascicularis.de",
+  "credentialsId": "xxxxxx-xxx-xxxx-xxxx-xxxxxxx",
+  "oauthTokenUrl": "https://auth.test.camao.domains.fascicularis.de/connect/token"
 }

@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** |  | 
 **Type** | [**RecordType**](RecordType.md) |  | 
-**Class** | **string** |  | 
+**Class** | [**RecordClass**](RecordClass.md) |  | 
 **Ttl** | Pointer to **int32** |  | [optional] 
 **Data** | **string** |  | 
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 
 ### NewRecord
 
-`func NewRecord(name string, type_ RecordType, class string, data string, ) *Record`
+`func NewRecord(name string, type_ RecordType, class RecordClass, data string, ) *Record`
 
 NewRecord instantiates a new Record object
 This constructor will assign default values to properties that have it defined,
@@ -71,20 +71,20 @@ SetType sets Type field to given value.
 
 ### GetClass
 
-`func (o *Record) GetClass() string`
+`func (o *Record) GetClass() RecordClass`
 
 GetClass returns the Class field if non-nil, zero value otherwise.
 
 ### GetClassOk
 
-`func (o *Record) GetClassOk() (*string, bool)`
+`func (o *Record) GetClassOk() (*RecordClass, bool)`
 
 GetClassOk returns a tuple with the Class field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetClass
 
-`func (o *Record) SetClass(v string)`
+`func (o *Record) SetClass(v RecordClass)`
 
 SetClass sets Class field to given value.
 

@@ -19,6 +19,7 @@ const (
 	defaultOAuthTokenURL     = "https://auth.api.stackit.domains/connect/token"
 	defaultOAuthClientID     = ""
 	defaultOAuthClientSecret = ""
+	defaultCredentialId      = ""
 	ttlDNS                   = 60
 	webhookName              = "pinto"
 )
@@ -31,6 +32,7 @@ const (
 	oauthClientIDContextKey     = "oauth_client_id"
 	oauthClientSecretContextKey = "oauth_client_secret"
 	oauthScopesContextKey       = "oauth_scopes"
+	credentialIdContextKey      = "credential_id"
 )
 
 const (
@@ -39,12 +41,17 @@ const (
 	oauthClientSecretEnvName = "PINTO_OAUTH_CLIENT_SECRET"
 	pintoApiUrlEnvName       = "PINTO_API_URL"
 	oauthTokenUrlEnvName     = "PINTO_OAUTH_TOKEN_URL"
+	credentialIdEnvName      = "PINTO_CREDENTIAL_ID"
 )
 
 var (
 	defaultOauthScopes = []string{
-		"nexus",
-		"openapigateway",
+		"pinto_nexus",
+		"fava_openapi_gateway",
+
+		"fava_business_api",
+		"fava_credentials_api",
+		"pinto_citadel",
 	}
 )
 
@@ -59,6 +66,7 @@ type ProviderConfig struct {
 	PintoProvider string                `json:"pintoProvider,omitempty"`
 	PintoApiUrl   string                `json:"pintoApiUrl,omitempty"`
 	OauthTokenUrl string                `json:"oauthTokenUrl,omitempty"`
+	CredentialsId string                `json:"credentialsId,omitempty"`
 }
 
 func (c *Config) getContext() context.Context {
@@ -127,6 +135,14 @@ func (c *Config) OauthClientScopes() []string {
 		return defaultOauthScopes
 	}
 	return oauthScopes.([]string)
+}
+
+func (c *Config) CredentialsId() string {
+	credentialId := c.getContext().Value(credentialIdContextKey)
+	if credentialId == nil {
+		return defaultCredentialId
+	}
+	return credentialId.(string)
 }
 
 func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeRequest) error {
@@ -202,12 +218,16 @@ func (c *Config) init(k8Client kubernetes.Interface, ch *v1alpha1.ChallengeReque
 	}
 	enrichedContext = context.WithValue(enrichedContext, oauthCTokenUrlContextKey, oauthTokenUrl)
 
-	// TODO add missing scopes
-	//scopes := strings.Split(oauthScopesString.(string), ",")
-	//var massagedScopes []string
-	//for _, scope := range scopes {
-	//	massagedScopes = append(massagedScopes, strings.Trim(scope, " "))
-	//}
+	// evaluate credentialId
+	credentialId := defaultCredentialId
+	credentialIdEnvironment := os.Getenv(credentialIdEnvName)
+	if oauthTokenUrlEnvironment != "" {
+		credentialId = credentialIdEnvironment
+	}
+	if config.CredentialsId != "" {
+		credentialId = config.CredentialsId
+	}
+	enrichedContext = context.WithValue(enrichedContext, credentialIdContextKey, credentialId)
 
 	c.savedContext = enrichedContext
 	return nil

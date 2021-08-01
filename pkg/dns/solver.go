@@ -46,16 +46,21 @@ func (p *ProviderSolver) Present(ch *v1alpha1.ChallengeRequest) error {
 		return err
 	}
 
-	record, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch), ch.ResolvedZone)
+	createModel, modelErr := p.getCreateRecordRequestModel(p.createRecordFromChallenge(ch), ch.ResolvedZone)
 	if modelErr != nil {
 		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(modelErr).Error("Failed to create request model for entry creation")
 		return modelErr
 	}
-	requestModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.config.getContext()).
-		CreateRecordRequestModel(record)
 
-	log.WithFields(logutils.CreateModelFields(ch, requestModel)).Trace("Prepared entry creation")
-	_, response, creationErr := requestModel.Execute()
+	apiOptions, createOptionsErr := p.createAPIOptions(nil)
+	if createOptionsErr != nil {
+		return createOptionsErr
+	}
+	createRequestModel := apiClient.RecordApi.DnsApiRecordsPost(p.config.getContext()).
+		CreateRecordRequestModel(createModel).XApiOptions(apiOptions)
+
+	log.WithFields(logutils.CreateModelFields(ch, createRequestModel)).Trace("Prepared entry creation")
+	_, response, creationErr := createRequestModel.Execute()
 
 	if creationErr != nil {
 		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(creationErr).Error("API returned failure during challenge creation")
@@ -93,19 +98,22 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 	log.WithFields(logutils.CreateChallengeFields(ch)).Trace("Retrieved list of TXT records to be readded")
 	//TODO END
 
-	deletionModel := apiClient.RecordsApi.ApiDnsRecordsDelete(p.getConfig().getContext()).
-		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
+	// if multiple entries with the same name are defined, we have to force the deletion of all
+	apiOptions, createOptionsErr := p.createAPIOptions(map[string]string{
+		"force": "true",
+	})
+	if createOptionsErr != nil {
+		return createOptionsErr
+	}
+	deletionModel := apiClient.RecordApi.DnsApiRecordsDelete(p.getConfig().getContext()).
 		Zone(ch.ResolvedZone).
-		Environment(p.getConfig().Environment()).
-		RecordType(gopinto.TXT).
-		Provider(p.getConfig().Provider()).
-		// if multiple entries with the same name are defined, we have to force the deletion of all
-		RequestBody(map[string]string{
-			"force": "true",
-		})
-	log.WithFields(logutils.CreateModelFields(ch, deletionModel)).Trace("Prepared deletion request")
-	deletionResponse, deletionErr := deletionModel.Execute()
+		RecordType(gopinto.RECORDTYPE_TXT).
+		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
+		XApiOptions(apiOptions)
 
+	log.WithFields(logutils.CreateModelFields(ch, deletionModel)).Trace("Prepared deletion model")
+
+	deletionResponse, deletionErr := deletionModel.Execute()
 	if deletionErr != nil {
 		log.WithFields(logutils.CreateChallengeFields(ch)).WithError(deletionErr).Error("API returned failure during entry deletion")
 		return deletionErr
@@ -123,7 +131,7 @@ func (p *ProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) error {
 			return modelErr
 		}
 
-		creationModel := apiClient.RecordsApi.ApiDnsRecordsPost(p.getConfig().getContext()).
+		creationModel := apiClient.RecordApi.DnsApiRecordsPost(p.getConfig().getContext()).
 			CreateRecordRequestModel(recordModel)
 		log.WithFields(logutils.CreateModelFields(ch, creationModel)).Trace("Prepared recreation of re-add job")
 		_, response, creationErr := creationModel.Execute()

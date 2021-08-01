@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-const pagingSize = 20
-
 func (p *ProviderSolver) getDomainAPIClient() (*gopinto.APIClient, error) {
 	config := gopinto.NewConfiguration()
 	if config == nil {
@@ -32,11 +30,7 @@ func (p *ProviderSolver) getDomainAPIClient() (*gopinto.APIClient, error) {
 func (p *ProviderSolver) getCreateRecordRequestModel(record gopinto.Record, zone string) (gopinto.CreateRecordRequestModel, error) {
 	var postRequestModel gopinto.CreateRecordRequestModel
 	err := copier.Copy(&postRequestModel, &record)
-
-	environment := p.getConfig().Environment()
-	postRequestModel.Environment = *gopinto.NewNullableString(&environment)
-	postRequestModel.Zone = zone
-	postRequestModel.Provider = p.getConfig().Provider()
+	postRequestModel.SetZone(zone)
 
 	return postRequestModel, err
 }
@@ -48,15 +42,16 @@ func (p *ProviderSolver) getEntryList(ch *v1alpha1.ChallengeRequest) ([]gopinto.
 		return []gopinto.Record{}, err
 	}
 
-	records, response, getError := apiClient.RecordsApi.ApiDnsRecordsGet(p.getConfig().getContext()).
+	apiOptions, createOptionsErr := p.createAPIOptions(nil)
+	if createOptionsErr != nil {
+		return nil, createOptionsErr
+	}
+	requestModel := apiClient.RecordApi.DnsApiRecordsGet(p.getConfig().getContext()).Zone(ch.ResolvedZone).
 		Name(strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), ".")).
-		Zone(ch.ResolvedZone).
-		Environment(p.getConfig().Environment()).
-		RecordType(gopinto.TXT).
-		Provider(p.getConfig().Provider()).
-		PageSize(pagingSize).
-		Execute()
+		XApiOptions(apiOptions).
+		RecordType(gopinto.RECORDTYPE_TXT)
 
+	records, response, getError := requestModel.Execute()
 	if getError != nil {
 		logrus.Error(getError)
 		return nil, getError
@@ -123,8 +118,8 @@ func (p *ProviderSolver) createRecordFromChallenge(ch *v1alpha1.ChallengeRequest
 	ttl := int32(ttlDNS)
 	return gopinto.Record{
 		Name:  strings.TrimSuffix(strings.TrimSuffix(ch.ResolvedFQDN, ch.ResolvedZone), "."),
-		Type:  gopinto.TXT,
-		Class: "IN",
+		Type:  gopinto.RECORDTYPE_TXT,
+		Class: gopinto.RECORDCLASS_IN,
 		Ttl:   &ttl,
 		Data:  ch.Key,
 	}
@@ -151,4 +146,22 @@ func configureOAuthClientConfig(p *ProviderSolver) (cc.Config, error) {
 		Scopes:       clientScope,
 	}
 	return oauthConfig, nil
+}
+
+func (p ProviderSolver) createAPIOptions(meta map[string]string) (string, error) {
+	apiOptions := new(gopinto.ApiOptions)
+	accessOptions := new(gopinto.AccessOptions)
+	accessOptions.SetEnvironment(p.getConfig().Environment())
+	accessOptions.SetProvider(p.getConfig().Provider())
+	accessOptions.SetCredentialsId(p.getConfig().CredentialsId())
+	apiOptions.SetAccessOptions(*accessOptions)
+
+	apiOptions.SetMeta(meta)
+
+	marshalledJson, marshallErr := apiOptions.MarshalJSON()
+	if marshallErr != nil {
+		return "", marshallErr
+	}
+	result := string(marshalledJson)
+	return result, nil
 }

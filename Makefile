@@ -12,22 +12,24 @@ IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
 PACKAGE ?= "gopinto"
 SOURCE_URL ?= "https://pinto.irgendwo.co/api/swagger/dns-swagger.json"
 
-GIT_HOST ?= "gitlab.com"
-GIT_REPOSITORY_NAMESPACE ?= "whizus/customer/pinto"
-GIT_REPOSITORY_NAME ?= "cert-manager-webhook-pinto"
+GIT_HOST ?= "github.com"
+GIT_REPOSITORY_NAMESPACE ?= "camaoag"
+GIT_REPOSITORY_NAME ?= "cert-manager-webhook-project-pinto"
 
 # Kubebuilder
 KUBEBUILDER_VERSION=2.3.1
 
+# Testing
+CODE_PATHS ?= ./pkg/... ./internal/...
 TEST_ZONE_NAME ?= example.com.
 
 # Run tests
 test: unit-test tests/kubebuilder
-	TEST_ZONE_NAME=$(TEST_ZONE_NAME) go test -v ./... -coverprofile cover.out
+	TEST_ZONE_NAME=$(TEST_ZONE_NAME) go test -v $(CODE_PATHS) -coverprofile cover.out
 
 .PHONY: unit-test
 unit-test:
-	go test -v -race ./pkg/...
+	go test -v -race $(CODE_PATHS)
 
 tests/kubebuilder:
 	curl -fsSL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH).tar.gz -o kubebuilder-tools.tar.gz
@@ -48,11 +50,11 @@ docker-build:
 
 .PHONY: get-dependencies
 get-dependencies:
-	go get -v -t -d ./...
+	go get -v -t -d $(CODE_PATHS)
 
 .PHONY: vet
 vet:
-	go vet ./...
+	go vet $(CODE_PATHS)
 
 .PHONY: fmt-fix
 fmt-fix:
@@ -70,5 +72,5 @@ generate-openapi:
 		--git-repo-id $(GIT_REPOSITORY_NAME) \
 		--git-user-id $(GIT_REPOSITORY_NAMESPACE) \
 		--git-host $(GIT_HOST) \
-		--additional-properties=generateInterfaces=true,isGoSubmodule=true
+		--additional-properties=generateInterfaces=true,isGoSubmodule=true,enumClassPrefix=true
 	rm internal/gopinto/go.mod internal/gopinto/go.sum
