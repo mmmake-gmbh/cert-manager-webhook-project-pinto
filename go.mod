@@ -6,7 +6,7 @@ require (
 	github.com/jetstack/cert-manager v1.3.1
 	github.com/jinzhu/copier v0.3.2
 	github.com/sirupsen/logrus v1.8.1
-	golang.org/x/oauth2 v0.0.0-20210218202405-ba52d332ba99
+	golang.org/x/oauth2 v0.0.0-20210817223510-7df4dd6e12ab
 	google.golang.org/grpc v1.39.1 // indirect
 	k8s.io/api v0.19.0
 	k8s.io/apiextensions-apiserver v0.19.0
