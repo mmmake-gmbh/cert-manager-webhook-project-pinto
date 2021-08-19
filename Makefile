@@ -18,24 +18,32 @@ GIT_REPOSITORY_NAME ?= "cert-manager-webhook-project-pinto"
 
 # Kubebuilder
 KUBEBUILDER_VERSION=2.3.1
+KUBEBUILDER_DIR=kubebuilder/bin
+KUBEBUILDER_BIN_ETCD=$(KUBEBUILDER_DIR)/etcd
+KUBEBUILDER_BIN_APISERVER=$(KUBEBUILDER_DIR)/kube-apiserver
+KUBEBUILDER_BIN_KUBECTL=$(KUBEBUILDER_DIR)/kubectl
 
 # Testing
 CODE_PATHS ?= ./pkg/... ./internal/...
 TEST_ZONE_NAME ?= example.com.
 
 # Run tests
-test: unit-test tests/kubebuilder
-	TEST_ZONE_NAME=$(TEST_ZONE_NAME) go test -v $(CODE_PATHS) -coverprofile cover.out
+.PHONY: test
+test: unit-test integration-test
+
+.PHONY: integration-test
+integration-test: _tests/kubebuilder
+	TEST_ZONE_NAME=$(TEST_ZONE_NAME) TEST_ASSET_ETCD=$(KUBEBUILDER_BIN_ETCD) TEST_ASSET_KUBE_APISERVER=$(KUBEBUILDER_BIN_APISERVER) TEST_ASSET_KUBECTL=$(KUBEBUILDER_BIN_KUBECTL) go test -v -coverprofile cover.out ./tests/suite_test.go
 
 .PHONY: unit-test
 unit-test:
 	go test -v -race $(CODE_PATHS)
 
-tests/kubebuilder:
+_tests/kubebuilder: clean-kubebuilder
 	curl -fsSL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH).tar.gz -o kubebuilder-tools.tar.gz
-	mkdir tests/kubebuilder
+	mkdir -p tests/kubebuilder
 	tar -xvf kubebuilder-tools.tar.gz
-	mv kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH)/bin tests/kubebuilder/
+	mv -f kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH)/bin tests/kubebuilder/
 	rm kubebuilder-tools.tar.gz
 	rm -R kubebuilder_$(KUBEBUILDER_VERSION)_$(OS)_$(ARCH)
 
