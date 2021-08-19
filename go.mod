@@ -7,12 +7,8 @@ require (
 	github.com/jinzhu/copier v0.3.2
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/oauth2 v0.0.0-20210817223510-7df4dd6e12ab
-	google.golang.org/grpc v1.39.1 // indirect
-	k8s.io/api v0.21.3
-	k8s.io/apiextensions-apiserver v0.21.3
-	k8s.io/apimachinery v0.21.3
-	k8s.io/client-go v0.21.3
+	k8s.io/api v0.22.0
+	k8s.io/apiextensions-apiserver v0.22.0
+	k8s.io/apimachinery v0.22.0
+	k8s.io/client-go v0.22.0
 )
-
-// v1.30.0 removes an API which is needed for go.etcd.io/etcd/proxy/grpcproxy, but etcd does not pin its dependency
-replace google.golang.org/grpc v1.39.1 => google.golang.org/grpc v1.29.1

@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package tests
@@ -26,9 +27,10 @@ func TestRunsSuite(t *testing.T) {
 	}
 
 	fixture := dns.NewFixture(&pinto.ProviderSolver{},
+		dns.SetDNSServer("ns3.digitalocean.com:53"),
 		dns.SetResolvedZone(zone),
 		dns.SetAllowAmbientCredentials(true),
-		dns.SetBinariesPath(currentDir+"/kubebuilder/bin"),
+		//dns.SetBinariesPath(),
 		dns.SetManifestPath(currentDir+"/testdata"),
 		dns.SetStrict(true),
 	)
