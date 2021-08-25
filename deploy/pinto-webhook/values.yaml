@@ -5,9 +5,9 @@ certManager:
   serviceAccountName: cert-manager
 
 image:
-  repository: pinto/cert-manager-webhook-pinto
+  repository: camao/cert-manager-webhook-project-pinto
   pullPolicy: IfNotPresent
-  tag: ""
+  tag: latest
 
 nameOverride: ""
 fullnameOverride: ""
