@@ -34,7 +34,7 @@ jobs:
         run: make vet
 
       - name: Test
-        run: make test
+        run: make unit-test
 
       - name: Test building
         run: make build
