@@ -574,6 +574,8 @@ github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d/go.mod
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jetstack/cert-manager v1.5.1 h1:9EqdZcqS26Q+KrvsFXuf06AfaKradDVXzP9coJUPxP0=
 github.com/jetstack/cert-manager v1.5.1/go.mod h1:YGW5O4iuy9SvAfnXCjZOu0B5Upsvg/FaWaqm5UuwkdI=
+github.com/jetstack/cert-manager v1.5.3 h1:+uIbfZl+Qk+TlRQy46cI1N8lVMatu/JrUTaNtyHZD2k=
+github.com/jetstack/cert-manager v1.5.3/go.mod h1:YGW5O4iuy9SvAfnXCjZOu0B5Upsvg/FaWaqm5UuwkdI=
 github.com/jinzhu/copier v0.3.2 h1:QdBOCbaouLDYaIPFfi1bKv5F5tPpeTwXe4sD0jqtz5w=
 github.com/jinzhu/copier v0.3.2/go.mod h1:24xnZezI2Yqac9J61UC6/dG/k76ttpq0DdJI3QmUvro=
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
