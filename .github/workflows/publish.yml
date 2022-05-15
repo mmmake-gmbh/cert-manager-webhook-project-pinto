@@ -19,7 +19,7 @@ jobs:
       - name: Setup build env
         run: echo "BUILD_TARGET=${GITHUB_REF##*/}" >> $GITHUB_ENV
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
