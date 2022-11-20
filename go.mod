@@ -1,6 +1,6 @@
 module github.com/camaoag/cert-manager-webhook-project-pinto
 
-go 1.16
+go 1.19
 
 require (
 	github.com/jetstack/cert-manager v1.5.3
